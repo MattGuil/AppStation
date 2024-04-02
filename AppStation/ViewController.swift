@@ -51,6 +51,7 @@ class ViewController: UIViewController {
         
         // lancement de la tâche
         task.resume()
+        
     }
 
 
