@@ -13,7 +13,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         // définition de l'URL de l'API
-        let apiUrl = URL(string: "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/prix_des_carburants_j_7/records?limit=5")!
+        let apiUrl = URL(string: "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/prix_des_carburants_j_7/records")!
         
         // création de la session URLSession
         let session = URLSession.shared
@@ -39,11 +39,33 @@ class ViewController: UIViewController {
                 return
             }
             
-            // conversion des données JSON en objet Swift
+            // récupération des données JSON
             do {
-                let json = try JSONSerialization.jsonObject(with: data, options: [])
-                print(json)
-                // traitement des données JSON...
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    if let records = json["results"] as? [[String: Any]] {
+                        var fuelsSet = Set<String>()
+                        var servicesSet = Set<String>()
+                        
+                        for record in records {
+                            if let fuels = record["fuel"] as? [String] {
+                                fuelsSet.formUnion(fuels)
+                            }
+                            if let services = record["services"] as? [String] {
+                                servicesSet.formUnion(services)
+                            }
+                        }
+                        
+                        var fuelsList = Array(fuelsSet)
+                        var servicesList = Array(servicesSet)
+                        
+                        // trier les tableaux par ordre alphabétique
+                        fuelsList.sort()
+                        servicesList.sort()
+                        
+                        print("Fuels : \(fuelsList)")
+                        print("Services : \(servicesList)")
+                     }
+                }
             } catch {
                 print("Erreur lors de la conversion JSON : \(error)")
             }
