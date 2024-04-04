@@ -18,8 +18,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dUf-ye-gdc">
-                                <rect key="frame" x="-16" y="59" width="393" height="710"/>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" rotateEnabled="NO" pitchEnabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dUf-ye-gdc">
+                                <rect key="frame" x="0.0" y="59" width="393" height="710"/>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
                         </subviews>
@@ -29,10 +29,14 @@
                             <constraint firstItem="dUf-ye-gdc" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="1X5-zH-MiF"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="dUf-ye-gdc" secondAttribute="trailing" id="IZy-Ax-Kcr"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="dUf-ye-gdc" secondAttribute="bottom" id="KiQ-Vo-yAQ"/>
+                            <constraint firstItem="dUf-ye-gdc" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="RTB-1T-Su3"/>
                             <constraint firstItem="dUf-ye-gdc" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="vPh-6o-MDy"/>
                         </constraints>
                     </view>
                     <tabBarItem key="tabBarItem" title="Map" id="0R4-mR-VVU"/>
+                    <connections>
+                        <outlet property="map" destination="dUf-ye-gdc" id="J8F-ZG-ASB"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
