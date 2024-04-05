@@ -6,9 +6,12 @@
 //
 
 import UIKit
+import MapKit
 
 class SearchViewController: UIViewController {
 
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -43,28 +46,34 @@ class SearchViewController: UIViewController {
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     if let records = json["results"] as? [[String: Any]] {
-                        var fuelsSet = Set<String>()
-                        var servicesSet = Set<String>()
                         
+                        var markedDepartments = Set<String>()
+                        
+                        // parcours de toutes les stations services enregistrées dans l'API
                         for record in records {
-                            if let fuels = record["fuel"] as? [String] {
-                                fuelsSet.formUnion(fuels)
-                            }
-                            if let services = record["services"] as? [String] {
-                                servicesSet.formUnion(services)
+                            if let cpString = record["cp"] as? String {
+                                let department = String(cpString.prefix(2))
+                                if !markedDepartments.contains(department) {
+                                    // récupération des coordonnées géographiques de la station courante
+                                    if let geo_point = record["geo_point"] as? [String: Double] {
+                                        
+                                        // création d'une annotation de marqueur pour la station courante
+                                        let annotation = MKPointAnnotation()
+                                        annotation.coordinate = CLLocationCoordinate2D(latitude: geo_point["lat"] ?? 0.0, longitude: geo_point["lon"] ?? 0.0)
+                                        
+                                        // ajout de l'annotation à la carte
+                                        DispatchQueue.main.async {
+                                            // self.map.addAnnotation(annotation)
+                                        }
+                                    }
+                                    
+                                    markedDepartments.insert(department)
+                                }
                             }
                         }
                         
-                        var fuelsList = Array(fuelsSet)
-                        var servicesList = Array(servicesSet)
-                        
-                        // trier les tableaux par ordre alphabétique
-                        fuelsList.sort()
-                        servicesList.sort()
-                        
-                        print("Fuels : \(fuelsList)")
-                        print("Services : \(servicesList)")
-                     }
+                        print(markedDepartments.sorted())
+                    }
                 }
             } catch {
                 print("Erreur lors de la conversion JSON : \(error)")

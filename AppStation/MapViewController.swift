@@ -7,14 +7,29 @@
 
 import UIKit
 import MapKit
+import CoreLocation
 
 class MapViewController: UIViewController {
-
+    
+    let locationManager = CLLocationManager()
+    
+    // var stations: [[String: Any]] = []
     @IBOutlet weak var map: MKMapView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
+        // loadDataFromAPI()
+        
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = kCLDistanceFilterNone
+        locationManager.startUpdatingLocation()
+        
+        map.showsUserLocation = true
+    }
+    
+    func loadDataFromAPI() {
         // définition de l'URL de l'API
         let apiUrl = URL(string: "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/prix_des_carburants_j_7/records")!
         
@@ -45,31 +60,7 @@ class MapViewController: UIViewController {
             // récupération des données JSON
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    if let records = json["results"] as? [[String: Any]] {
-                        
-                        var stationCounter = 0
-                        
-                        // parcours de toutes les stations services enregistrées dans l'API
-                        for record in records {
-                            // récupération des coordonnées géographiques de la station courante
-                            if let geo_point = record["geo_point"] as? [String: Double] {
-                                
-                                // création d'une annotation de marqueur pour la station courante
-                                let annotation = MKPointAnnotation()
-                                annotation.coordinate = CLLocationCoordinate2D(latitude: geo_point["lat"] ?? 0.0, longitude: geo_point["lon"] ?? 0.0)
-                                
-                                // ajout de l'annotation à la carte
-                                DispatchQueue.main.async {
-                                    self.map.addAnnotation(annotation)
-                                }
-                            }
-                            
-                            stationCounter += 1
-                        }
-                        
-                        print("stationCounter = \(stationCounter)")
-                        
-                    }
+                    print(json)
                 }
             } catch {
                 print("Erreur lors de la conversion JSON : \(error)")
@@ -79,16 +70,41 @@ class MapViewController: UIViewController {
         // lancement de la tâche
         task.resume()
     }
-    
 
     /*
-    // MARK: - Navigation
+     func placeNearestStationMarker(userLocation: CLLocation) {
+         var nearestStation: [String: Any]? = nil
+         var nearestDistance: CLLocationDistance = Double.infinity
 
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
+         for record in self.stations {
+             guard let geo_point = record["geo_point"] as? [String: Double],
+                   let latitude = geo_point["lat"],
+                   let longitude = geo_point["lon"] else {
+                 continue
+             }
+
+             let stationLocation = CLLocation(latitude: latitude, longitude: longitude)
+             let distance = userLocation.distance(from: stationLocation)
+
+             if distance < nearestDistance {
+                 nearestDistance = distance
+                 nearestStation = record
+             }
+         }
+
+         if let nearestStation = nearestStation {
+             // Ajouter un marqueur pour la station la plus proche sur la carte
+             if let latitude = (nearestStation["geo_point"] as? [String: Double])?["lat"],
+                let longitude = (nearestStation["geo_point"] as? [String: Double])?["lon"],
+                let stationName = nearestStation["station_name"] as? String {
+                 let annotation = MKPointAnnotation()
+                 annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                 annotation.title = stationName
+                 map.addAnnotation(annotation)
+             }
+         }
+     }
+     */
+
 
 }
