@@ -15,12 +15,14 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
     
     let locationManager = CLLocationManager()
     
+    var userLocation : CLLocation?
+    
     // var stations: [[String: Any]] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // loadDataFromAPI()
+        loadDataFromAPI()
         
         // Demander l'autorisation pour l'utilisation de la localisation
         locationManager.requestWhenInUseAuthorization()
@@ -50,6 +52,9 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
         // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
         let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
         map.setRegion(region, animated: true)
+        
+        // Mise à jour de la variable globale userLocation
+        self.userLocation = userLocation
     }
     
     // Gérer les erreurs de localisation
@@ -89,29 +94,28 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     if let records = json["results"] as? [[String: Any]] {
-
-                        var stationCounter = 0
-
-                        // parcours de toutes les stations services enregistrées dans l'API
+                            
+                        var counter = 0
+                        
                         for record in records {
-                            // récupération des coordonnées géographiques de la station courante
-                            if let geo_point = record["geo_point"] as? [String: Double] {
-
-                                // création d'une annotation de marqueur pour la station courante
-                                let annotation = MKPointAnnotation()
-                                annotation.coordinate = CLLocationCoordinate2D(latitude: geo_point["lat"] ?? 0.0, longitude: geo_point["lon"] ?? 0.0)
-
-                                // ajout de l'annotation à la carte
-                                DispatchQueue.main.async {
-                                    self.map.addAnnotation(annotation)
+                                
+                                guard let geo_point = record["geo_point"] as? [String: Double],
+                                      let latitude = geo_point["lat"],
+                                      let longitude = geo_point["lon"] else {
+                                    continue
                                 }
-                            }
-
-                            stationCounter += 1
+                             
+                                let stationLocation = CLLocation(latitude: latitude, longitude: longitude)
+                                let distance = self.userLocation?.distance(from: stationLocation)
+                                
+                                print(distance!)
+                                
+                                counter += 1
+                            
                         }
-
-                        print("stationCounter = \(stationCounter)")
-
+                        
+                        print("counter = \(counter)")
+                        
                     }
                 }
             } catch {
