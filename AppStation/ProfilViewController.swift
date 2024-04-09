@@ -8,7 +8,7 @@
 import UIKit
 import CoreLocation
 
-class ProfilViewController: UIViewController, CLLocationManagerDelegate {
+class ProfilViewController: UIViewController {
     
     let locationManager = CLLocationManager()
     

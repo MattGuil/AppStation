@@ -12,17 +12,50 @@ import CoreLocation
 class MapViewController: UIViewController, CLLocationManagerDelegate {
     
     @IBOutlet weak var map: MKMapView!
-    
     let locationManager = CLLocationManager()
-    
-    var userLocation : CLLocation?
-    
-    // var stations: [[String: Any]] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let apiUrl = URL(string: "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?select=adresse,geom&where=code_departement%3D75&limit=100")!
+        // Demander l'autorisation pour l'utilisation de la localisation
+        locationManager.requestWhenInUseAuthorization()
+        
+        // Définir le délégué de CLLocationManager
+        locationManager.delegate = self
+        
+        // Configuration de la précision de la localisation
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = kCLDistanceFilterNone
+        
+        // Commencer à mettre à jour la localisation
+        locationManager.startUpdatingLocation()
+        
+        // Afficher la localisation de l'utilisateur sur la carte
+        map.showsUserLocation = true
+        
+    }
+    
+    // Cette méthode est appelée chaque fois que la position de l'utilisateur est mise à jour
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        
+        // Récupérer la dernière position de l'utilisateur
+        guard let userLocation = locations.last else {
+            return
+        }
+        
+        // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
+        let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
+        map.setRegion(region, animated: true)
+        
+        // Mise à jour de la variable globale userLocation
+        // self.userLocation = userLocation.coordinate
+        
+        let latMin = (userLocation.coordinate.latitude - 5) * 100000
+        let latMax = (userLocation.coordinate.latitude + 5) * 100000
+        let lonMin = (userLocation.coordinate.longitude - 5) * 100000
+        let lonMax = (userLocation.coordinate.longitude + 5) * 100000
+        
+        let apiUrl = URL(string: "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?select=adresse,geom&where=latitude%3E%3D\(latMin)%20AND%20latitude%3C%3D\(latMax)%20AND%20longitude%3E%3D\(lonMin)%20AND%20longitude%3C%3D\(lonMax)&limit=100")!
         
         loadDataFromAPI(apiUrl: apiUrl) { result in
             switch result {
@@ -55,71 +88,11 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
                     print("counterAnnotations = \(counterAnnotations)")
                 }
                 
-                /*
-                // Affiche les distances
-                if let records = json["results"] as? [[String: Any]] {
-                        
-                    var counter = 0
-                    
-                    for record in records {
-                            
-                            guard let geo_point = record["geom"] as? [String: Double],
-                                  let latitude = geo_point["lat"],
-                                  let longitude = geo_point["lon"] else {
-                                continue
-                            }
-                         
-                            let stationLocation = CLLocation(latitude: latitude, longitude: longitude)
-                            if let userLocation = self.userLocation {
-                                let distance = userLocation.distance(from: stationLocation)
-                                print(distance)
-                            } else {
-                                print("Aucune position de l'utilisateur disponible")
-                            }
-                            counter += 1
-                    
-                    }
-                    
-                    print("counter = \(counter)")
-                    
-                }
-                */
             case .failure(let error):
                 print("Erreur lors du chargement des données :", error)
             }
         }
         
-        // Demander l'autorisation pour l'utilisation de la localisation
-        locationManager.requestWhenInUseAuthorization()
-        
-        // Définir le délégué de CLLocationManager
-        locationManager.delegate = self
-        
-        // Configuration de la précision de la localisation
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = kCLDistanceFilterNone
-        
-        // Commencer à mettre à jour la localisation
-        locationManager.startUpdatingLocation()
-        
-        // Afficher la localisation de l'utilisateur sur la carte
-        map.showsUserLocation = true
-    }
-    
-    // Cette méthode est appelée chaque fois que la position de l'utilisateur est mise à jour
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        
-        // Récupérer la dernière position de l'utilisateur
-        guard let userLocation = locations.last else {
-            return
-        }
-        
-        // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
-        // let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
-        // map.setRegion(region, animated: true)
-        
-        // Mise à jour de la variable globale userLocation
-        self.userLocation = userLocation
     }
     
     // Gérer les erreurs de localisation
@@ -164,40 +137,5 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
         // lancement de la tâche
         task.resume()
     }
-
-    /*
-    func placeNearestStationMarker(userLocation: CLLocation) {
-         var nearestStation: [String: Any]? = nil
-         var nearestDistance: CLLocationDistance = Double.infinity
-
-         for record in self.stations {
-             guard let geo_point = record["geo_point"] as? [String: Double],
-                   let latitude = geo_point["lat"],
-                   let longitude = geo_point["lon"] else {
-                 continue
-             }
-
-             let stationLocation = CLLocation(latitude: latitude, longitude: longitude)
-             let distance = userLocation.distance(from: stationLocation)
-
-             if distance < nearestDistance {
-                 nearestDistance = distance
-                 nearestStation = record
-             }
-         }
-
-         if let nearestStation = nearestStation {
-             // Ajouter un marqueur pour la station la plus proche sur la carte
-             if let latitude = (nearestStation["geo_point"] as? [String: Double])?["lat"],
-                let longitude = (nearestStation["geo_point"] as? [String: Double])?["lon"],
-                let stationName = nearestStation["name"] as? String {
-                 let annotation = MKPointAnnotation()
-                 annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                 annotation.title = stationName
-                 self.map.addAnnotation(annotation)
-             }
-         }
-     }
-     */
 
 }
