@@ -22,7 +22,72 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        loadDataFromAPI()
+        let apiUrl = URL(string: "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?select=adresse,geom&where=code_departement%3D75&limit=100")!
+        
+        loadDataFromAPI(apiUrl: apiUrl) { result in
+            switch result {
+            case .success(let json):
+                print(json)
+                
+                if let records = json["results"] as? [[String: Any]] {
+                    
+                    var counterRecords = 0
+                    var counterAnnotations = 0
+                    
+                    for record in records {
+                        if let latitude = (record["geom"] as? [String: Double])?["lat"],
+                           let longitude = (record["geom"] as? [String: Double])?["lon"] {
+                            
+                            let annotation = MKPointAnnotation()
+                            annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                            if let adresse = record["adresse"] as? String {
+                                annotation.title = adresse
+                            }
+                            self.map.addAnnotation(annotation)
+                            
+                            counterAnnotations += 1
+
+                        }
+                        counterRecords += 1
+                    }
+                    
+                    print("counterRecords = \(counterRecords)")
+                    print("counterAnnotations = \(counterAnnotations)")
+                }
+                
+                /*
+                // Affiche les distances
+                if let records = json["results"] as? [[String: Any]] {
+                        
+                    var counter = 0
+                    
+                    for record in records {
+                            
+                            guard let geo_point = record["geom"] as? [String: Double],
+                                  let latitude = geo_point["lat"],
+                                  let longitude = geo_point["lon"] else {
+                                continue
+                            }
+                         
+                            let stationLocation = CLLocation(latitude: latitude, longitude: longitude)
+                            if let userLocation = self.userLocation {
+                                let distance = userLocation.distance(from: stationLocation)
+                                print(distance)
+                            } else {
+                                print("Aucune position de l'utilisateur disponible")
+                            }
+                            counter += 1
+                    
+                    }
+                    
+                    print("counter = \(counter)")
+                    
+                }
+                */
+            case .failure(let error):
+                print("Erreur lors du chargement des données :", error)
+            }
+        }
         
         // Demander l'autorisation pour l'utilisation de la localisation
         locationManager.requestWhenInUseAuthorization()
@@ -50,8 +115,8 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
         }
         
         // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
-        let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
-        map.setRegion(region, animated: true)
+        // let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
+        // map.setRegion(region, animated: true)
         
         // Mise à jour de la variable globale userLocation
         self.userLocation = userLocation
@@ -62,10 +127,7 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
         print("Error requesting location: \(error.localizedDescription)")
     }
     
-    func loadDataFromAPI() {
-        // définition de l'URL de l'API
-        let apiUrl = URL(string: "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/prix_des_carburants_j_7/records")!
-        
+    func loadDataFromAPI(apiUrl: URL, completion: @escaping (Result<[String: Any], Error>) -> Void) {
         // création de la session URLSession
         let session = URLSession.shared
         
@@ -73,53 +135,29 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
         let task = session.dataTask(with: apiUrl) { data, response, error in
             // vérification des erreurs
             if let error = error {
-                print("Erreur : \(error)")
+                completion(.failure(error))
                 return
             }
             
             // vérification de la réponse
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
-                print("Réponse invalide")
+                completion(.failure(NSError(domain: "Response Error", code: 0, userInfo: nil)))
                 return
             }
             
             // vérification des données
             guard let data = data else {
-                print("Aucune donnée reçue")
+                completion(.failure(NSError(domain: "Data Error", code: 0, userInfo: nil)))
                 return
             }
             
             // récupération des données JSON
             do {
-                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    if let records = json["results"] as? [[String: Any]] {
-                            
-                        var counter = 0
-                        
-                        for record in records {
-                                
-                                guard let geo_point = record["geo_point"] as? [String: Double],
-                                      let latitude = geo_point["lat"],
-                                      let longitude = geo_point["lon"] else {
-                                    continue
-                                }
-                             
-                                let stationLocation = CLLocation(latitude: latitude, longitude: longitude)
-                                let distance = self.userLocation?.distance(from: stationLocation)
-                                
-                                print(distance!)
-                                
-                                counter += 1
-                            
-                        }
-                        
-                        print("counter = \(counter)")
-                        
-                    }
-                }
+                let json = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
+                completion(.success(json))
             } catch {
-                print("Erreur lors de la conversion JSON : \(error)")
+                completion(.failure(error))
             }
         }
         
