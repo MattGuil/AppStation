@@ -5,6 +5,7 @@
 //  Created by Matthieu Guillemin on 04/04/2024.
 //
 
+import Foundation
 import UIKit
 import MapKit
 import CoreLocation
@@ -55,8 +56,10 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
         let lonMin = (userLocation.coordinate.longitude - 5) * 100000
         let lonMax = (userLocation.coordinate.longitude + 5) * 100000
         
-        let apiUrl = URL(string: "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?select=adresse,geom&where=latitude%3E%3D\(latMin)%20AND%20latitude%3C%3D\(latMax)%20AND%20longitude%3E%3D\(lonMin)%20AND%20longitude%3C%3D\(lonMax)&limit=100")!
-        
+        let baseUrl = "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-carburants-flux-instantane-v2/records"
+        let query   = "latitude>=\(latMin) AND latitude<=\(latMax) AND longitude>=\(lonMin) AND longitude<=\(lonMax)"
+        let apiUrl = URL(string: "\(baseUrl)?q=\(query)")!
+         
         loadDataFromAPI(apiUrl: apiUrl) { result in
             switch result {
             case .success(let json):
