@@ -10,78 +10,201 @@ import UIKit
 import MapKit
 import CoreLocation
 
-class MapViewController: UIViewController, CLLocationManagerDelegate {
+class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
     
     @IBOutlet weak var map: MKMapView!
     let locationManager = CLLocationManager()
+    @IBOutlet weak var searchButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Demander l'autorisation pour l'utilisation de la localisation
-        locationManager.requestWhenInUseAuthorization()
-        
-        // Définir le délégué de CLLocationManager
         locationManager.delegate = self
-        
-        // Configuration de la précision de la localisation
+        locationManager.requestWhenInUseAuthorization()
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = kCLDistanceFilterNone
-        
-        // Commencer à mettre à jour la localisation
         locationManager.startUpdatingLocation()
+        
+        map.delegate = self
+        
+    }
+    
+    // Fonction pour dessiner les lignes de l'itinéraire sur la carte
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         
         // Afficher la localisation de l'utilisateur sur la carte
         map.showsUserLocation = true
         
+        guard let polyline = overlay as? MKPolyline else {
+            return MKOverlayRenderer()
+        }
+        
+        let renderer = MKPolylineRenderer(polyline: polyline)
+        renderer.strokeColor = .systemBlue
+        renderer.lineWidth = 5
+        return renderer
     }
     
     // Cette méthode est appelée chaque fois que la position de l'utilisateur est mise à jour
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         
-        // Récupérer la dernière position de l'utilisateur
-        guard let userLocation = locations.last else {
+        /*
+         // Récupérer la dernière position de l'utilisateur
+         guard let userLocation = locations.last else {
+             return
+         }
+         
+         // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
+         let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 2000, longitudinalMeters: 2000)
+         map.setRegion(region, animated: true)
+        */
+        
+    }
+    
+    // Gérer les erreurs de localisation
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Error requesting location: \(error.localizedDescription)")
+    }
+    
+    
+    
+    @IBAction func searchButtonClicked(_ sender: UIButton) {
+        guard let userLocation = locationManager.location else {
+            print("Impossible de récupérer la localisation de l'utilisateur.")
             return
         }
         
-        // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
-        let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
-        map.setRegion(region, animated: true)
+        getUserCityLoc(forLocation: userLocation) { cityName in
+            if let userCityLoc = cityName {
+                print("La ville de l'utilisateur est : \(userCityLoc)")
+                self.loadStationData(userCityLoc: userCityLoc)
+            } else {
+                print("Impossible de déterminer la ville de l'utilisateur.")
+            }
+        }
+    }
+    
+    
+    func getUserCityLoc(forLocation location: CLLocation, completion: @escaping (String?) -> Void) {
+        let geocoder = CLGeocoder()
         
-        // Mise à jour de la variable globale userLocation
-        // self.userLocation = userLocation.coordinate
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            guard let placemark = placemarks?.first, error == nil else {
+                // Gestion de l'erreur
+                completion(nil)
+                return
+            }
+            
+            // Récupération du nom de la ville depuis le placemark
+            if let city = placemark.locality {
+                completion(city)
+            } else {
+                // Si le nom de la ville n'est pas disponible, on peut essayer d'autres informations comme le nom de la commune ou de la sous-localité
+                if let subLocality = placemark.subLocality {
+                    completion(subLocality)
+                } else if let subAdministrativeArea = placemark.subAdministrativeArea {
+                    completion(subAdministrativeArea)
+                } else {
+                    // Si aucune information n'est disponible, retourner nil
+                    completion(nil)
+                }
+            }
+        }
+    }
+    
+    func loadStationData(userCityLoc: String) {
+        let urlString = "https://data.economie.gouv.fr/api/records/1.0/search/"
+        var urlComponents = URLComponents(string: urlString)!
         
-        let latMin = (userLocation.coordinate.latitude - 5) * 100000
-        let latMax = (userLocation.coordinate.latitude + 5) * 100000
-        let lonMin = (userLocation.coordinate.longitude - 5) * 100000
-        let lonMax = (userLocation.coordinate.longitude + 5) * 100000
+        urlComponents.queryItems = [
+            URLQueryItem(name: "dataset", value: "prix-carburants-flux-instantane-v2"),
+            URLQueryItem(name: "q", value: "ville:\(userCityLoc)"),
+            // latitude:[\(floor(userLat)) TO \(ceil(userLat))] AND longitude:[\(floor(userLon)) TO \(ceil(userLon))]
+            URLQueryItem(name: "rows", value: "100")
+        ]
         
-        let baseUrl = "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-carburants-flux-instantane-v2/records"
-        let query   = "latitude>=\(latMin) AND latitude<=\(latMax) AND longitude>=\(lonMin) AND longitude<=\(lonMax)"
-        let apiUrl = URL(string: "\(baseUrl)?q=\(query)")!
-         
-        loadDataFromAPI(apiUrl: apiUrl) { result in
+        guard let url = urlComponents.url else {
+            print("Invalid URL")
+            return
+        }
+        
+        loadDataFromAPI(apiUrl: url) { result in
+            
+            // Itinéraire le plus court
+            var shortestRoute: MKRoute?
+
+            // Position de l'itinéraire le plus court
+            var destinationCoordinate: CLLocationCoordinate2D?
+            
             switch result {
-            case .success(let json):
-                print(json)
+            case .success(let data):
                 
-                if let records = json["results"] as? [[String: Any]] {
+                if let records = data["records"] as? [[String: Any]] {
+                
+                    // print(records)
                     
                     var counterRecords = 0
                     var counterAnnotations = 0
                     
                     for record in records {
-                        if let latitude = (record["geom"] as? [String: Double])?["lat"],
-                           let longitude = (record["geom"] as? [String: Double])?["lon"] {
+                        if let fields = record["fields"] as? [String: Any] {
                             
-                            let annotation = MKPointAnnotation()
-                            annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                            if let adresse = record["adresse"] as? String {
+                            if let latitudeString = fields["latitude"] as? String,
+                               let longitudeString = fields["longitude"] as? String,
+                               let latitude = Double(latitudeString),
+                               let longitude = Double(longitudeString),
+                               let adresse = fields["adresse"] as? String {
+                                
+                                /*
+                                print("Latitude : \(latitude)")
+                                print("Longitude : \(longitude)")
+                                print("Adresse : \(adresse)")
+                                print()
+                                */
+
+                                let annotation = MKPointAnnotation()
+                                annotation.coordinate = CLLocationCoordinate2D(latitude: latitude/100000, longitude: longitude/100000)
                                 annotation.title = adresse
+                                self.map.addAnnotation(annotation)
+
+                                // Créer une requête d'itinéraire
+                                let request = MKDirections.Request()
+                                request.source = MKMapItem(placemark: MKPlacemark(coordinate: self.locationManager.location!.coordinate))
+                                request.destination = MKMapItem(placemark: MKPlacemark(coordinate: annotation.coordinate))
+                                request.transportType = .automobile // Spécifier le type de transport
+
+                                // Créer un objet de direction pour obtenir les instructions de l'itinéraire
+                                let directions = MKDirections(request: request)
+
+                                // Calculer l'itinéraire
+                                directions.calculate { (response, error) in
+                                    guard let response = response, error == nil else {
+                                         print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
+                                         return
+                                    }
+
+                                    // Obtenir le premier itinéraire de la réponse
+                                    let route = response.routes[0]
+
+                                    // Vérifier si c'est le plus court jusqu'à présent
+                                    if shortestRoute == nil || route.distance < shortestRoute!.distance {
+                                        shortestRoute = route
+                                        destinationCoordinate = annotation.coordinate
+
+                                        self.map.removeOverlays(self.map.overlays)
+                                        // Ajouter l'itinéraire à la carte
+                                        self.map.addOverlay(route.polyline, level: .aboveRoads)
+                                    }
+
+                                    // Centrer la vue de la carte sur l'itinéraire le plus court
+                                    if destinationCoordinate != nil {
+                                        let insets = UIEdgeInsets(top: 50, left: 50, bottom: 50, right: 50) // Marge autour de l'itinéraire
+                                        self.map.setVisibleMapRect(shortestRoute!.polyline.boundingMapRect, edgePadding: insets, animated: true)
+                                    }
+                                }
+
+                                counterAnnotations += 1
                             }
-                            self.map.addAnnotation(annotation)
-                            
-                            counterAnnotations += 1
 
                         }
                         counterRecords += 1
@@ -90,18 +213,12 @@ class MapViewController: UIViewController, CLLocationManagerDelegate {
                     print("counterRecords = \(counterRecords)")
                     print("counterAnnotations = \(counterAnnotations)")
                 }
-                
             case .failure(let error):
-                print("Erreur lors du chargement des données :", error)
+                print("Erreur lors du chargement des données (loadStationData) : \(error)")
             }
         }
-        
     }
     
-    // Gérer les erreurs de localisation
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Error requesting location: \(error.localizedDescription)")
-    }
     
     func loadDataFromAPI(apiUrl: URL, completion: @escaping (Result<[String: Any], Error>) -> Void) {
         // création de la session URLSession

@@ -6,13 +6,8 @@
 //
 
 import UIKit
-import CoreLocation
 
 class ProfilViewController: UIViewController {
-    
-    let locationManager = CLLocationManager()
-    
-    var userLocation : CLLocation?
 
     override func viewDidLoad() {
         super.viewDidLoad()
