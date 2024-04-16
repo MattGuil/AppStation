@@ -17,7 +17,11 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
     @IBOutlet weak var searchButton: UIButton!
     
     var stations : [[String: Any]]?
-    var infoView: InfoView?
+    
+    @IBOutlet weak var InfoView: UIView!
+    @IBOutlet weak var adresseLabel: UILabel!
+    @IBOutlet weak var carburantsLabel: UILabel!
+    @IBOutlet weak var closeInfoViewButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,12 +32,25 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         locationManager.distanceFilter = kCLDistanceFilterNone
         locationManager.startUpdatingLocation()
         
+        map.showsUserLocation = true
         map.delegate = self
         
-        // Ajouter la vue personnalisée InfoView
-        infoView = InfoView(frame: CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: 200))
-        view.addSubview(infoView!)
+        InfoView.layer.cornerRadius = 10
         
+    }
+    
+    @IBAction func closeInfoView(_ sender: UIButton) {
+        
+        // Cacher la vue InfoView
+        InfoView.isHidden = true
+        
+        // Désélectionner l'annotation actuellement sélectionnée sur la carte
+        if let selectedAnnotation = map.selectedAnnotations.first {
+            map.deselectAnnotation(selectedAnnotation, animated: true)
+        }
+        
+        // Effacer l'itinéraire affiché à l'écran
+        self.map.removeOverlays(self.map.overlays)
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
@@ -41,6 +58,36 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
             return
         }
         
+        InfoView.isHidden = false
+        
+        // Créer une requête d'itinéraire
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: self.locationManager.location!.coordinate))
+        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: annotation.coordinate))
+        request.transportType = .automobile
+
+        // Créer un objet de direction pour obtenir les instructions de l'itinéraire
+        let directions = MKDirections(request: request)
+
+        // Calculer l'itinéraire
+        directions.calculate { (response, error) in
+            guard let response = response, error == nil else {
+                 print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
+                 return
+            }
+
+            // Obtenir le premier itinéraire de la réponse
+            let route = response.routes[0]
+            // Effacer l'itinéraire actuellement à l'écran (s'il existe)
+            self.map.removeOverlays(self.map.overlays)
+            // Ajouter l'itinéraire à la carte
+            self.map.addOverlay(route.polyline, level: .aboveRoads)
+
+            // Centrer la vue de la carte sur l'itinéraire le plus court
+            let insets = UIEdgeInsets(top: 100, left: 50, bottom: 250, right: 50) // Marge autour de l'itinéraire
+            self.map.setVisibleMapRect(route.polyline.boundingMapRect, edgePadding: insets, animated: true)
+        }
+        		
         // Récupérer les informations sur la station depuis les données de la station
         for station in self.stations! {
             if let fields = station["fields"] as? [String: Any],
@@ -48,13 +95,8 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                let carburantsDisponibles = fields["carburants_disponibles"] as? String {
                 
                 if adresse == annotation.title {
-                    // Afficher la vue InfoView avec les informations pertinentes
-                    let infoView = InfoView(frame: CGRect(x: 0, y: view.frame.height - 200, width: view.frame.width, height: 200))
-                    infoView.configure(adresse: adresse, carburantsDisponibles: carburantsDisponibles)
-                    view.superview?.addSubview(infoView)
-                    UIView.animate(withDuration: 0.3) {
-                        infoView.frame.origin.y = view.frame.height - 200
-                    }
+                    adresseLabel.text = adresse
+                    carburantsLabel.text = carburantsDisponibles
                     break
                 }
             }
@@ -63,9 +105,6 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
     
     // Fonction pour dessiner les lignes de l'itinéraire sur la carte
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-        
-        // Afficher la localisation de l'utilisateur sur la carte
-        map.showsUserLocation = true
         
         guard let polyline = overlay as? MKPolyline else {
             return MKOverlayRenderer()
@@ -161,12 +200,6 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         
         loadDataFromAPI(apiUrl: url) { result in
             
-            // Itinéraire le plus court
-            var shortestRoute: MKRoute?
-
-            // Position de l'itinéraire le plus court
-            var destinationCoordinate: CLLocationCoordinate2D?
-            
             switch result {
             case .success(let data):
                 
@@ -192,42 +225,6 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                                 annotation.title = adresse
                                 self.map.addAnnotation(annotation)
 
-                                // Créer une requête d'itinéraire
-                                let request = MKDirections.Request()
-                                request.source = MKMapItem(placemark: MKPlacemark(coordinate: self.locationManager.location!.coordinate))
-                                request.destination = MKMapItem(placemark: MKPlacemark(coordinate: annotation.coordinate))
-                                request.transportType = .automobile // Spécifier le type de transport
-
-                                // Créer un objet de direction pour obtenir les instructions de l'itinéraire
-                                let directions = MKDirections(request: request)
-
-                                // Calculer l'itinéraire
-                                directions.calculate { (response, error) in
-                                    guard let response = response, error == nil else {
-                                         print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
-                                         return
-                                    }
-
-                                    // Obtenir le premier itinéraire de la réponse
-                                    let route = response.routes[0]
-
-                                    // Vérifier si c'est le plus court jusqu'à présent
-                                    if shortestRoute == nil || route.distance < shortestRoute!.distance {
-                                        shortestRoute = route
-                                        destinationCoordinate = annotation.coordinate
-
-                                        self.map.removeOverlays(self.map.overlays)
-                                        // Ajouter l'itinéraire à la carte
-                                        self.map.addOverlay(route.polyline, level: .aboveRoads)
-                                    }
-
-                                    // Centrer la vue de la carte sur l'itinéraire le plus court
-                                    if destinationCoordinate != nil {
-                                        let insets = UIEdgeInsets(top: 50, left: 50, bottom: 50, right: 50) // Marge autour de l'itinéraire
-                                        self.map.setVisibleMapRect(shortestRoute!.polyline.boundingMapRect, edgePadding: insets, animated: true)
-                                    }
-                                }
-
                                 counterAnnotations += 1
                             }
 
@@ -237,6 +234,9 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                     
                     print("counterRecords = \(counterRecords)")
                     print("counterAnnotations = \(counterAnnotations)")
+                    
+                    // Centrer la vue sur la position de l'utilisateur
+                    self.centerMapOnUserLocation()
                 }
             case .failure(let error):
                 print("Erreur lors du chargement des données (loadStationData) : \(error)")
@@ -281,6 +281,15 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         
         // lancement de la tâche
         task.resume()
+    }
+    
+    
+    func centerMapOnUserLocation() {
+        if let userLocation = locationManager.location?.coordinate {
+            let regionRadius: CLLocationDistance = 1000 // Rayon de la région en mètres
+            let region = MKCoordinateRegion(center: userLocation, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
+            map.setRegion(region, animated: true)
+        }
     }
 
 }
