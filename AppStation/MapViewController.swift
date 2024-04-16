@@ -16,6 +16,9 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
     let locationManager = CLLocationManager()
     @IBOutlet weak var searchButton: UIButton!
     
+    var stations : [[String: Any]]?
+    var infoView: InfoView?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -27,6 +30,35 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         
         map.delegate = self
         
+        // Ajouter la vue personnalisée InfoView
+        infoView = InfoView(frame: CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: 200))
+        view.addSubview(infoView!)
+        
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        guard let annotation = view.annotation as? MKPointAnnotation else {
+            return
+        }
+        
+        // Récupérer les informations sur la station depuis les données de la station
+        for station in self.stations! {
+            if let fields = station["fields"] as? [String: Any],
+               let adresse = fields["adresse"] as? String,
+               let carburantsDisponibles = fields["carburants_disponibles"] as? String {
+                
+                if adresse == annotation.title {
+                    // Afficher la vue InfoView avec les informations pertinentes
+                    let infoView = InfoView(frame: CGRect(x: 0, y: view.frame.height - 200, width: view.frame.width, height: 200))
+                    infoView.configure(adresse: adresse, carburantsDisponibles: carburantsDisponibles)
+                    view.superview?.addSubview(infoView)
+                    UIView.animate(withDuration: 0.3) {
+                        infoView.frame.origin.y = view.frame.height - 200
+                    }
+                    break
+                }
+            }
+        }
     }
     
     // Fonction pour dessiner les lignes de l'itinéraire sur la carte
@@ -119,7 +151,6 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         urlComponents.queryItems = [
             URLQueryItem(name: "dataset", value: "prix-carburants-flux-instantane-v2"),
             URLQueryItem(name: "q", value: "ville:\(userCityLoc)"),
-            // latitude:[\(floor(userLat)) TO \(ceil(userLat))] AND longitude:[\(floor(userLon)) TO \(ceil(userLon))]
             URLQueryItem(name: "rows", value: "100")
         ]
         
@@ -141,7 +172,7 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                 
                 if let records = data["records"] as? [[String: Any]] {
                 
-                    // print(records)
+                    self.stations = records
                     
                     var counterRecords = 0
                     var counterAnnotations = 0
@@ -154,14 +185,8 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                                let latitude = Double(latitudeString),
                                let longitude = Double(longitudeString),
                                let adresse = fields["adresse"] as? String {
-                                
-                                /*
-                                print("Latitude : \(latitude)")
-                                print("Longitude : \(longitude)")
-                                print("Adresse : \(adresse)")
-                                print()
-                                */
 
+                                // Marquer toutes les stations sur la map
                                 let annotation = MKPointAnnotation()
                                 annotation.coordinate = CLLocationCoordinate2D(latitude: latitude/100000, longitude: longitude/100000)
                                 annotation.title = adresse
