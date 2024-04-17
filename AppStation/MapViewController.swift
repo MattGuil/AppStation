@@ -15,32 +15,6 @@ struct Carburant {
     let prix: String
 }
 
-class CarburantCell: UICollectionViewCell {
-    
-    // Définis les IBOutlets pour les éléments de ta cellule (par exemple, UIImageView pour l'image, UILabel pour le prix, etc.)
-    @IBOutlet weak var imageView: UIImageView!
-    @IBOutlet weak var prixLabel: UILabel!
-    
-    // Méthode pour configurer la cellule avec les données du carburant
-    func configure(with carburant: Carburant) {
-        imageView.image = UIImage(named: carburant.nom)
-        prixLabel.text = carburant.prix
-    }
-}
-
-// Dans ta classe UICollectionViewDataSource
-extension MapViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return carburants.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CarburantCell", for: indexPath) as! CarburantCell
-        let carburant = carburants[indexPath.item]
-        cell.configure(with: carburant)
-        return cell
-    }
-}
 
 class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
     
@@ -50,16 +24,18 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
     
     var stations : [[String: Any]]?
     
+    @IBOutlet weak var collectionView: UICollectionView!
     var carburants: [Carburant] = []
     
     @IBOutlet weak var InfoView: UIView!
     @IBOutlet weak var adresseLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
-    @IBOutlet weak var carburantsLabel: UIView!
     @IBOutlet weak var automateIcon: UIImageView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        collectionView.dataSource = self
         
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
@@ -145,54 +121,21 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                         self.adresseLabel.text = adresse.uppercased()
                         self.distanceLabel.text = "à \(Int(round(route!.distance))) m"
                         
-                        // Convertir la chaîne carburantsDisponibles en tableau en utilisant le point-virgule comme délimiteur
-                        // let carburantsArray = carburantsDisponibles.components(separatedBy: ";")
-
-                        // Créer une UIStackView pour contenir les icones de carburant
-                        let stackView = UIStackView()
-                        stackView.axis = .horizontal
-                        stackView.alignment = .center
-                        stackView.distribution = .equalCentering
-                        stackView.spacing = 10 // Espacement entre les images (ajuste selon tes préférences)
+                        carburants.removeAll()
                         
                         if let data = carburantsString.data(using: .utf8) {
                             do {
                                 let JSONObj = try JSONSerialization.jsonObject(with: data, options: [])
-                                
                                 if let array = JSONObj as? [[String: String]] {
-                                    for carburant in array {
-                                        // Vérifier si une image correspondante existe dans tes assets
-                                        if let nom = carburant["@nom"],
-                                           let prix = carburant["@valeur"],
-                                           let image = UIImage(named: nom) {
-                                            let imageView = UIImageView(image: image)
+                                    for carburantData in array {
+                                        if let nom = carburantData["@nom"],
+                                           let prix = carburantData["@valeur"] {
                                             
                                             let carburant = Carburant(nom: nom, prix: prix)
                                             carburants.append(carburant)
-                                            
-                                            imageView.contentMode = .scaleToFill
-                                            imageView.widthAnchor.constraint(equalToConstant: 40).isActive = true
-                                            imageView.heightAnchor.constraint(equalToConstant: 40).isActive = true
-                                            
-                                            // Ajouter l'image à la stackView
-                                            stackView.addArrangedSubview(imageView)
                                         }
                                     }
-                                    
-                                    for subview in self.carburantsLabel.subviews {
-                                        subview.removeFromSuperview()
-                                    }
-                                    
-                                    // Définir l'alignement de la stackView sur .center
-                                    stackView.alignment = .center
-
-                                    // Ajouter la stackView à carburantsLabel
-                                    carburantsLabel.addSubview(stackView)
-
-                                    // Définir les contraintes pour centrer la stackView horizontalement
-                                    stackView.translatesAutoresizingMaskIntoConstraints = false
-                                    stackView.centerXAnchor.constraint(equalTo: carburantsLabel.centerXAnchor).isActive = true
-                                    stackView.centerYAnchor.constraint(equalTo: carburantsLabel.centerYAnchor).isActive = true
+                                    collectionView.reloadData()
                                 } else {
                                     print("Invalid JSON format")
                                 }
@@ -401,4 +344,32 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         }
     }
 
+}
+
+
+extension MapViewController: UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return carburants.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CarburantCell", for: indexPath) as! CarburantCell
+        let carburant = carburants[indexPath.item]
+        cell.configure(with: carburant)
+        return cell
+    }
+
+}
+
+class CarburantCell: UICollectionViewCell {
+    
+    @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var prixLabel: UILabel!
+    
+    func configure(with carburant: Carburant) {
+        imageView.image = UIImage(named: carburant.nom)
+        prixLabel.text = carburant.prix
+        
+        print(carburant)
+    }
 }
