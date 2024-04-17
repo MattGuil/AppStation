@@ -10,6 +10,38 @@ import UIKit
 import MapKit
 import CoreLocation
 
+struct Carburant {
+    let nom: String
+    let prix: String
+}
+
+class CarburantCell: UICollectionViewCell {
+    
+    // Définis les IBOutlets pour les éléments de ta cellule (par exemple, UIImageView pour l'image, UILabel pour le prix, etc.)
+    @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var prixLabel: UILabel!
+    
+    // Méthode pour configurer la cellule avec les données du carburant
+    func configure(with carburant: Carburant) {
+        imageView.image = UIImage(named: carburant.nom)
+        prixLabel.text = carburant.prix
+    }
+}
+
+// Dans ta classe UICollectionViewDataSource
+extension MapViewController: UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return carburants.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CarburantCell", for: indexPath) as! CarburantCell
+        let carburant = carburants[indexPath.item]
+        cell.configure(with: carburant)
+        return cell
+    }
+}
+
 class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
     
     @IBOutlet weak var map: MKMapView!
@@ -18,10 +50,13 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
     
     var stations : [[String: Any]]?
     
+    var carburants: [Carburant] = []
+    
     @IBOutlet weak var InfoView: UIView!
     @IBOutlet weak var adresseLabel: UILabel!
-    @IBOutlet weak var carburantsLabel: UILabel!
-    @IBOutlet weak var closeInfoViewButton: UIButton!
+    @IBOutlet weak var distanceLabel: UILabel!
+    @IBOutlet weak var carburantsLabel: UIView!
+    @IBOutlet weak var automateIcon: UIImageView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,22 +70,34 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         map.showsUserLocation = true
         map.delegate = self
         
+        self.centerMapOnUserLocation()
+        
         InfoView.layer.cornerRadius = 10
+        
+        // Ajoute un UITapGestureRecognizer à la vue principale
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        view.addGestureRecognizer(tapGesture)
+        
+        // Assure-toi que InfoView est détectable par les gestes
+        InfoView.isUserInteractionEnabled = true
         
     }
     
-    @IBAction func closeInfoView(_ sender: UIButton) {
-        
-        // Cacher la vue InfoView
-        InfoView.isHidden = true
-        
-        // Désélectionner l'annotation actuellement sélectionnée sur la carte
-        if let selectedAnnotation = map.selectedAnnotations.first {
-            map.deselectAnnotation(selectedAnnotation, animated: true)
+    @objc func handleTap(_ sender: UITapGestureRecognizer) {
+        // Vérifie si le tap a eu lieu en dehors de InfoView
+        let location = sender.location(in: self.view)
+        if !InfoView.frame.contains(location) {
+            // Cacher InfoView
+            InfoView.isHidden = true
+            
+            // Désélectionner l'annotation actuellement sélectionnée sur la carte
+            if let selectedAnnotation = map.selectedAnnotations.first {
+                map.deselectAnnotation(selectedAnnotation, animated: true)
+            }
+            
+            // Effacer l'itinéraire affiché à l'écran
+            self.map.removeOverlays(self.map.overlays)
         }
-        
-        // Effacer l'itinéraire affiché à l'écran
-        self.map.removeOverlays(self.map.overlays)
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
@@ -58,9 +105,8 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
             return
         }
         
-        InfoView.isHidden = false
-        
         // Créer une requête d'itinéraire
+        var route : MKRoute?
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: self.locationManager.location!.coordinate))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: annotation.coordinate))
@@ -70,37 +116,100 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         let directions = MKDirections(request: request)
 
         // Calculer l'itinéraire
-        directions.calculate { (response, error) in
+        directions.calculate { [self] (response, error) in
             guard let response = response, error == nil else {
                  print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
                  return
             }
 
             // Obtenir le premier itinéraire de la réponse
-            let route = response.routes[0]
+            route = response.routes[0]
             // Effacer l'itinéraire actuellement à l'écran (s'il existe)
             self.map.removeOverlays(self.map.overlays)
             // Ajouter l'itinéraire à la carte
-            self.map.addOverlay(route.polyline, level: .aboveRoads)
+            self.map.addOverlay(route!.polyline, level: .aboveRoads)
 
             // Centrer la vue de la carte sur l'itinéraire le plus court
-            let insets = UIEdgeInsets(top: 100, left: 50, bottom: 250, right: 50) // Marge autour de l'itinéraire
-            self.map.setVisibleMapRect(route.polyline.boundingMapRect, edgePadding: insets, animated: true)
-        }
-        		
-        // Récupérer les informations sur la station depuis les données de la station
-        for station in self.stations! {
-            if let fields = station["fields"] as? [String: Any],
-               let adresse = fields["adresse"] as? String,
-               let carburantsDisponibles = fields["carburants_disponibles"] as? String {
-                
-                if adresse == annotation.title {
-                    adresseLabel.text = adresse
-                    carburantsLabel.text = carburantsDisponibles
-                    break
+            let insets = UIEdgeInsets(top: 75, left: 50, bottom: 275, right: 50) // Marge autour de l'itinéraire
+            self.map.setVisibleMapRect(route!.polyline.boundingMapRect, edgePadding: insets, animated: true)
+            
+            // Récupérer les informations sur la station depuis les données de la station
+            for station in self.stations! {
+                if let fields = station["fields"] as? [String: Any],
+                   let automate = fields["horaires_automate_24_24"] as? String,
+                   let adresse = fields["adresse"] as? String,
+                   let carburantsString = fields["prix"] as? String {
+                    
+                    if adresse.uppercased() == annotation.title {
+                        self.automateIcon.isHidden = (automate == "Non")
+                        self.adresseLabel.text = adresse.uppercased()
+                        self.distanceLabel.text = "à \(Int(round(route!.distance))) m"
+                        
+                        // Convertir la chaîne carburantsDisponibles en tableau en utilisant le point-virgule comme délimiteur
+                        // let carburantsArray = carburantsDisponibles.components(separatedBy: ";")
+
+                        // Créer une UIStackView pour contenir les icones de carburant
+                        let stackView = UIStackView()
+                        stackView.axis = .horizontal
+                        stackView.alignment = .center
+                        stackView.distribution = .equalCentering
+                        stackView.spacing = 10 // Espacement entre les images (ajuste selon tes préférences)
+                        
+                        if let data = carburantsString.data(using: .utf8) {
+                            do {
+                                let JSONObj = try JSONSerialization.jsonObject(with: data, options: [])
+                                
+                                if let array = JSONObj as? [[String: String]] {
+                                    for carburant in array {
+                                        // Vérifier si une image correspondante existe dans tes assets
+                                        if let nom = carburant["@nom"],
+                                           let prix = carburant["@valeur"],
+                                           let image = UIImage(named: nom) {
+                                            let imageView = UIImageView(image: image)
+                                            
+                                            let carburant = Carburant(nom: nom, prix: prix)
+                                            carburants.append(carburant)
+                                            
+                                            imageView.contentMode = .scaleToFill
+                                            imageView.widthAnchor.constraint(equalToConstant: 40).isActive = true
+                                            imageView.heightAnchor.constraint(equalToConstant: 40).isActive = true
+                                            
+                                            // Ajouter l'image à la stackView
+                                            stackView.addArrangedSubview(imageView)
+                                        }
+                                    }
+                                    
+                                    for subview in self.carburantsLabel.subviews {
+                                        subview.removeFromSuperview()
+                                    }
+                                    
+                                    // Définir l'alignement de la stackView sur .center
+                                    stackView.alignment = .center
+
+                                    // Ajouter la stackView à carburantsLabel
+                                    carburantsLabel.addSubview(stackView)
+
+                                    // Définir les contraintes pour centrer la stackView horizontalement
+                                    stackView.translatesAutoresizingMaskIntoConstraints = false
+                                    stackView.centerXAnchor.constraint(equalTo: carburantsLabel.centerXAnchor).isActive = true
+                                    stackView.centerYAnchor.constraint(equalTo: carburantsLabel.centerYAnchor).isActive = true
+                                } else {
+                                    print("Invalid JSON format")
+                                }
+                            } catch {
+                                print("Erreur lors de la conversion de la chaîne en JSON : \(error)")
+                            }
+                        } else {
+                            print("Impossible de convertir la chaîne en données UTF-8")
+                        }
+                        
+                     }
                 }
             }
+            
+            self.InfoView.isHidden = false
         }
+        
     }
     
     // Fonction pour dessiner les lignes de l'itinéraire sur la carte
@@ -222,7 +331,7 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                                 // Marquer toutes les stations sur la map
                                 let annotation = MKPointAnnotation()
                                 annotation.coordinate = CLLocationCoordinate2D(latitude: latitude/100000, longitude: longitude/100000)
-                                annotation.title = adresse
+                                annotation.title = adresse.uppercased()
                                 self.map.addAnnotation(annotation)
 
                                 counterAnnotations += 1

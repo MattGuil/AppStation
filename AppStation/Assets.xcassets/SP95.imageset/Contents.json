@@ -1,11 +1,11 @@
 {
   "images" : [
     {
+      "filename" : "SP95.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "scope.png",
       "idiom" : "universal",
       "scale" : "2x"
     },

@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		67527E042BBC5F7200EE2118 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E032BBC5F7200EE2118 /* AppDelegate.swift */; };
 		67527E062BBC5F7200EE2118 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E052BBC5F7200EE2118 /* SceneDelegate.swift */; };
-		67527E082BBC5F7200EE2118 /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E072BBC5F7200EE2118 /* SearchViewController.swift */; };
 		67527E0B2BBC5F7200EE2118 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 67527E092BBC5F7200EE2118 /* Main.storyboard */; };
 		67527E0D2BBC5F7300EE2118 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 67527E0C2BBC5F7300EE2118 /* Assets.xcassets */; };
 		67527E102BBC5F7300EE2118 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 67527E0E2BBC5F7300EE2118 /* LaunchScreen.storyboard */; };
@@ -17,7 +16,6 @@
 		67527E252BBC5F7300EE2118 /* AppStationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E242BBC5F7300EE2118 /* AppStationUITests.swift */; };
 		67527E272BBC5F7300EE2118 /* AppStationUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E262BBC5F7300EE2118 /* AppStationUITestsLaunchTests.swift */; };
 		679E64C92BBEDFBD00820FD2 /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679E64C82BBEDFBD00820FD2 /* MapViewController.swift */; };
-		679E64CB2BBEE44900820FD2 /* ProfilViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679E64CA2BBEE44900820FD2 /* ProfilViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,7 +39,6 @@
 		67527E002BBC5F7200EE2118 /* AppStation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppStation.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		67527E032BBC5F7200EE2118 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		67527E052BBC5F7200EE2118 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		67527E072BBC5F7200EE2118 /* SearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
 		67527E0A2BBC5F7200EE2118 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		67527E0C2BBC5F7300EE2118 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		67527E0F2BBC5F7300EE2118 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -52,7 +49,6 @@
 		67527E242BBC5F7300EE2118 /* AppStationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStationUITests.swift; sourceTree = "<group>"; };
 		67527E262BBC5F7300EE2118 /* AppStationUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStationUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		679E64C82BBEDFBD00820FD2 /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
-		679E64CA2BBEE44900820FD2 /* ProfilViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,13 +101,11 @@
 			children = (
 				67527E032BBC5F7200EE2118 /* AppDelegate.swift */,
 				67527E052BBC5F7200EE2118 /* SceneDelegate.swift */,
-				67527E072BBC5F7200EE2118 /* SearchViewController.swift */,
 				67527E092BBC5F7200EE2118 /* Main.storyboard */,
 				67527E0C2BBC5F7300EE2118 /* Assets.xcassets */,
 				67527E0E2BBC5F7300EE2118 /* LaunchScreen.storyboard */,
 				67527E112BBC5F7300EE2118 /* Info.plist */,
 				679E64C82BBEDFBD00820FD2 /* MapViewController.swift */,
-				679E64CA2BBEE44900820FD2 /* ProfilViewController.swift */,
 			);
 			path = AppStation;
 			sourceTree = "<group>";
@@ -265,8 +259,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				67527E082BBC5F7200EE2118 /* SearchViewController.swift in Sources */,
-				679E64CB2BBEE44900820FD2 /* ProfilViewController.swift in Sources */,
 				67527E042BBC5F7200EE2118 /* AppDelegate.swift in Sources */,
 				67527E062BBC5F7200EE2118 /* SceneDelegate.swift in Sources */,
 				679E64C92BBEDFBD00820FD2 /* MapViewController.swift in Sources */,
