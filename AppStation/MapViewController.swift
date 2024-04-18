@@ -16,7 +16,7 @@ struct Carburant {
 }
 
 
-class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
+class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate, UICollectionViewDelegateFlowLayout {
     
     @IBOutlet weak var map: MKMapView!
     let locationManager = CLLocationManager()
@@ -30,6 +30,7 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
     @IBOutlet weak var InfoView: UIView!
     @IBOutlet weak var adresseLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
+    @IBOutlet weak var servicesLabel: UILabel!
     @IBOutlet weak var automateIcon: UIImageView!
     
     override func viewDidLoad() {
@@ -87,24 +88,24 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: self.locationManager.location!.coordinate))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: annotation.coordinate))
         request.transportType = .automobile
-
+        
         // Créer un objet de direction pour obtenir les instructions de l'itinéraire
         let directions = MKDirections(request: request)
-
+        
         // Calculer l'itinéraire
         directions.calculate { [self] (response, error) in
             guard let response = response, error == nil else {
-                 print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
-                 return
+                print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
+                return
             }
-
+            
             // Obtenir le premier itinéraire de la réponse
             route = response.routes[0]
             // Effacer l'itinéraire actuellement à l'écran (s'il existe)
             self.map.removeOverlays(self.map.overlays)
             // Ajouter l'itinéraire à la carte
             self.map.addOverlay(route!.polyline, level: .aboveRoads)
-
+            
             // Centrer la vue de la carte sur l'itinéraire le plus court
             let insets = UIEdgeInsets(top: 75, left: 50, bottom: 275, right: 50) // Marge autour de l'itinéraire
             self.map.setVisibleMapRect(route!.polyline.boundingMapRect, edgePadding: insets, animated: true)
@@ -114,12 +115,22 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                 if let fields = station["fields"] as? [String: Any],
                    let automate = fields["horaires_automate_24_24"] as? String,
                    let adresse = fields["adresse"] as? String,
+                   let services = (fields["services_service"] as? String) ?? (fields["services"] as? String) ?? "Aucun service renseigné." as? String,
                    let carburantsString = fields["prix"] as? String {
                     
                     if adresse.uppercased() == annotation.title {
                         self.automateIcon.isHidden = (automate == "Non")
                         self.adresseLabel.text = adresse.uppercased()
                         self.distanceLabel.text = "à \(Int(round(route!.distance))) m"
+                        self.servicesLabel.text = services
+                        
+                        print(carburantsString)
+                        
+                        /*
+                        for carburantName in carburantsString.components(separatedBy: "/") {
+                            carburants.append(Carburant(nom: carburantName, prix: "0.0"))
+                        }
+                        */
                         
                         carburants.removeAll()
                         
@@ -146,12 +157,23 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                             print("Impossible de convertir la chaîne en données UTF-8")
                         }
                         
-                     }
+                        let cellWidth = collectionView.bounds.size.width / CGFloat(carburants.count)
+                        let totalCellWidth = cellWidth * CGFloat(carburants.count)
+                        let padding = totalCellWidth / CGFloat(carburants.count)
+                        collectionView.contentInset = UIEdgeInsets(top: 0, left: padding, bottom: 0, right: padding)
+                        
+                        print("cellWidth: \(cellWidth)")
+                        print("totalCellWidth: \(totalCellWidth)")
+                        print("collectionView.bounds.size.width: \(collectionView.bounds.size.width)")
+                        print("padding: \(padding)")
+                        
+                    }
                 }
             }
             
             self.InfoView.isHidden = false
         }
+        
         
     }
     
@@ -174,13 +196,13 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         /*
          // Récupérer la dernière position de l'utilisateur
          guard let userLocation = locations.last else {
-             return
+         return
          }
          
          // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
          let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 2000, longitudinalMeters: 2000)
          map.setRegion(region, animated: true)
-        */
+         */
         
     }
     
@@ -240,7 +262,7 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         var urlComponents = URLComponents(string: urlString)!
         
         urlComponents.queryItems = [
-            URLQueryItem(name: "dataset", value: "prix-carburants-flux-instantane-v2"),
+            URLQueryItem(name: "dataset", value: "prix-des-carburants-en-france-flux-instantane-v2"),
             URLQueryItem(name: "q", value: "ville:\(userCityLoc)"),
             URLQueryItem(name: "rows", value: "100")
         ]
@@ -256,7 +278,7 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
             case .success(let data):
                 
                 if let records = data["records"] as? [[String: Any]] {
-                
+                    
                     self.stations = records
                     
                     var counterRecords = 0
@@ -265,21 +287,20 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                     for record in records {
                         if let fields = record["fields"] as? [String: Any] {
                             
-                            if let latitudeString = fields["latitude"] as? String,
-                               let longitudeString = fields["longitude"] as? String,
-                               let latitude = Double(latitudeString),
-                               let longitude = Double(longitudeString),
+                            if let geom = fields["geom"] as? [Double],
+                               let latitude = geom.first,
+                               let longitude = geom.last,
                                let adresse = fields["adresse"] as? String {
-
+                                
                                 // Marquer toutes les stations sur la map
                                 let annotation = MKPointAnnotation()
-                                annotation.coordinate = CLLocationCoordinate2D(latitude: latitude/100000, longitude: longitude/100000)
+                                annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
                                 annotation.title = adresse.uppercased()
                                 self.map.addAnnotation(annotation)
-
+                                
                                 counterAnnotations += 1
                             }
-
+                            
                         }
                         counterRecords += 1
                     }
@@ -343,23 +364,31 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
             map.setRegion(region, animated: true)
         }
     }
-
+    
 }
 
-
-extension MapViewController: UICollectionViewDataSource {
+extension MapViewController: UICollectionViewDataSource, UICollectionViewDelegate {
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return carburants.count
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CarburantCell", for: indexPath) as! CarburantCell
         let carburant = carburants[indexPath.item]
         cell.configure(with: carburant)
         return cell
     }
-
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+            let cellWidth = collectionView.bounds.size.width / CGFloat(carburants.count)
+            let totalCellWidth = cellWidth * CGFloat(carburants.count)
+            let padding = (collectionView.bounds.size.width - totalCellWidth) / 2
+            return UIEdgeInsets(top: 0, left: padding, bottom: 0, right: padding)
+        }
+    
 }
+
 
 class CarburantCell: UICollectionViewCell {
     

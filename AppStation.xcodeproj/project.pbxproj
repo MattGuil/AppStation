@@ -15,6 +15,7 @@
 		67527E1B2BBC5F7300EE2118 /* AppStationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E1A2BBC5F7300EE2118 /* AppStationTests.swift */; };
 		67527E252BBC5F7300EE2118 /* AppStationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E242BBC5F7300EE2118 /* AppStationUITests.swift */; };
 		67527E272BBC5F7300EE2118 /* AppStationUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67527E262BBC5F7300EE2118 /* AppStationUITestsLaunchTests.swift */; };
+		679CCD9D2BD1136E00E293FE /* MyCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679CCD9C2BD1136E00E293FE /* MyCollectionViewCell.swift */; };
 		679E64C92BBEDFBD00820FD2 /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679E64C82BBEDFBD00820FD2 /* MapViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -48,6 +49,7 @@
 		67527E202BBC5F7300EE2118 /* AppStationUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AppStationUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		67527E242BBC5F7300EE2118 /* AppStationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStationUITests.swift; sourceTree = "<group>"; };
 		67527E262BBC5F7300EE2118 /* AppStationUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStationUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		679CCD9C2BD1136E00E293FE /* MyCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyCollectionViewCell.swift; sourceTree = "<group>"; };
 		679E64C82BBEDFBD00820FD2 /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -106,6 +108,7 @@
 				67527E0E2BBC5F7300EE2118 /* LaunchScreen.storyboard */,
 				67527E112BBC5F7300EE2118 /* Info.plist */,
 				679E64C82BBEDFBD00820FD2 /* MapViewController.swift */,
+				679CCD9C2BD1136E00E293FE /* MyCollectionViewCell.swift */,
 			);
 			path = AppStation;
 			sourceTree = "<group>";
@@ -261,6 +264,7 @@
 			files = (
 				67527E042BBC5F7200EE2118 /* AppDelegate.swift in Sources */,
 				67527E062BBC5F7200EE2118 /* SceneDelegate.swift in Sources */,
+				679CCD9D2BD1136E00E293FE /* MyCollectionViewCell.swift in Sources */,
 				679E64C92BBEDFBD00820FD2 /* MapViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

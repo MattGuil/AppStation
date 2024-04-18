@@ -24,9 +24,8 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
-                            <view hidden="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EvK-T3-FEJ" userLabel="InfoView">
+                            <view hidden="YES" contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EvK-T3-FEJ" userLabel="InfoView">
                                 <rect key="frame" x="16" y="596" width="361" height="191"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <subviews>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" fixedFrame="YES" image="24h" translatesAutoresizingMaskIntoConstraints="NO" id="5jw-AS-gWk" userLabel="Automate2424">
                                         <rect key="frame" x="321" y="8" width="32" height="32"/>
@@ -46,9 +45,15 @@
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" fixedFrame="YES" scrollEnabled="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="eYz-9F-iAP">
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Nh3-IE-8eS" userLabel="Services">
+                                        <rect key="frame" x="0.0" y="0.0" width="361" height="191"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" scrollEnabled="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="eYz-9F-iAP">
                                         <rect key="frame" x="0.0" y="77" width="361" height="101"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                                         <collectionViewFlowLayout key="collectionViewLayout" scrollDirection="horizontal" minimumLineSpacing="10" minimumInteritemSpacing="10" id="fVe-EL-NFd">
                                             <size key="itemSize" width="63" height="96"/>
                                             <size key="headerReferenceSize" width="0.0" height="0.0"/>
@@ -86,6 +91,9 @@
                                     </collectionView>
                                 </subviews>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <constraints>
+                                    <constraint firstAttribute="bottom" secondItem="eYz-9F-iAP" secondAttribute="bottom" id="bX2-5a-Ymk"/>
+                                </constraints>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="m2P-aE-KZE">
                                 <rect key="frame" x="333" y="80" width="44" height="44"/>
@@ -109,6 +117,7 @@
                         <outlet property="distanceLabel" destination="ULv-Hf-ZEE" id="hVc-4I-X90"/>
                         <outlet property="map" destination="Kvn-gd-GPO" id="iFJ-KY-RuG"/>
                         <outlet property="searchButton" destination="m2P-aE-KZE" id="OwR-JG-5ta"/>
+                        <outlet property="servicesLabel" destination="Nh3-IE-8eS" id="R7e-U0-zgZ"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
