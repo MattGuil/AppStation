@@ -64,7 +64,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         view.addGestureRecognizer(tapGesture)
         
-        // Assure-toi que InfoView est détectable par les gestes
+        // S'assure que infosView est détectable par les gestes
         infosView.isUserInteractionEnabled = true
         
         collectionView.dataSource = self
@@ -265,6 +265,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             self.addressLabel.text = infos.address
             self.distanceLabel.text = "à \(infos.distance) m"
             
+            self.collectionView.reloadData()
+            
             // Afficher la InfosView
             self.infosView.isHidden = false
         }
@@ -361,7 +363,6 @@ extension MapViewController {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FuelCell", for: indexPath) as! FuelCell
         let fuel = infos.fuels[indexPath.item]
-        print("infos.fuels : \(infos.fuels)")
         cell.configure(with: fuel)
         return cell
     }
@@ -372,10 +373,10 @@ extension MapViewController {
 class FuelCell: UICollectionViewCell {
 
     @IBOutlet weak var imageView: UIImageView!
-    // @IBOutlet weak var priceLabel: UILabel!
+    @IBOutlet weak var priceLabel: UILabel!
 
     func configure(with fuel: Fuel) {
         imageView.image = UIImage(named: fuel.name)
-        // priceLabel.text = fuel.price
+        priceLabel.text = fuel.price
     }
 }
