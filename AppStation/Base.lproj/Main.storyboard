@@ -5,7 +5,6 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
         <capability name="Map view configurations" minToolsVersion="14.0"/>
-        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="collection view cell content view" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -15,109 +14,102 @@
         <scene sceneID="tne-QT-ifu">
             <objects>
                 <viewController title="Map View Controller" id="BYZ-38-t0r" customClass="MapViewController" customModule="AppStation" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                    <view key="view" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kvn-gd-GPO">
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="pWb-dm-uJK">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
-                            <view hidden="YES" contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EvK-T3-FEJ" userLabel="InfoView">
-                                <rect key="frame" x="16" y="596" width="361" height="191"/>
+                            <view hidden="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zvv-eG-Kye" userLabel="InfosView">
+                                <rect key="frame" x="10" y="529" width="373" height="228"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <subviews>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" fixedFrame="YES" image="24h" translatesAutoresizingMaskIntoConstraints="NO" id="5jw-AS-gWk" userLabel="Automate2424">
-                                        <rect key="frame" x="321" y="8" width="32" height="32"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                    </imageView>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Adresse" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vRr-mf-Uyl" userLabel="Adresse">
-                                        <rect key="frame" x="8" y="0.0" width="345" height="46"/>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Adresse" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6J0-8E-vLe" userLabel="AddressLabel">
+                                        <rect key="frame" x="0.0" y="8" width="373" height="41"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Distance" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ULv-Hf-ZEE">
-                                        <rect key="frame" x="113" y="35" width="134" height="27"/>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Distance" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NcF-5i-ton" userLabel="DistanceLabel">
+                                        <rect key="frame" x="0.0" y="43" width="373" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <fontDescription key="fontDescription" type="italicSystem" pointSize="17"/>
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Nh3-IE-8eS" userLabel="Services">
-                                        <rect key="frame" x="0.0" y="0.0" width="361" height="191"/>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="24h" translatesAutoresizingMaskIntoConstraints="NO" id="363-4s-VR2" userLabel="AutomateIcon">
+                                        <rect key="frame" x="329" y="9" width="36" height="40"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <nil key="textColor"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
-                                    <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" scrollEnabled="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="eYz-9F-iAP">
-                                        <rect key="frame" x="0.0" y="77" width="361" height="101"/>
-                                        <collectionViewFlowLayout key="collectionViewLayout" scrollDirection="horizontal" minimumLineSpacing="10" minimumInteritemSpacing="10" id="fVe-EL-NFd">
-                                            <size key="itemSize" width="63" height="96"/>
+                                    </imageView>
+                                    <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="Y2i-H2-F6o">
+                                        <rect key="frame" x="0.0" y="79" width="373" height="95"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                        <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="dhU-Xk-buz">
+                                            <size key="itemSize" width="93" height="93"/>
                                             <size key="headerReferenceSize" width="0.0" height="0.0"/>
                                             <size key="footerReferenceSize" width="0.0" height="0.0"/>
                                             <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                                         </collectionViewFlowLayout>
                                         <cells>
-                                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="CarburantCell" id="W3i-bb-ML1" customClass="CarburantCell" customModule="AppStation" customModuleProvider="target">
-                                                <rect key="frame" x="0.0" y="3" width="63" height="96"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
-                                                <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="N2R-PF-WAA">
-                                                    <rect key="frame" x="0.0" y="0.0" width="63" height="96"/>
+                                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="FuelCell" id="ogZ-rX-s9G" customClass="FuelCell" customModule="AppStation" customModuleProvider="target">
+                                                <rect key="frame" x="0.0" y="0.0" width="93" height="93"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="h0H-QS-n8J">
+                                                    <rect key="frame" x="0.0" y="0.0" width="93" height="93"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
-                                                        <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6ZF-vf-Vmd">
-                                                            <rect key="frame" x="0.0" y="0.0" width="63" height="63"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                                        <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Vh-uc-KUL">
+                                                            <rect key="frame" x="15" y="15" width="63" height="63"/>
+                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                         </imageView>
-                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="YHk-zU-YG5">
-                                                            <rect key="frame" x="0.0" y="62" width="63" height="34"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
-                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                            <nil key="textColor"/>
-                                                            <nil key="highlightedColor"/>
-                                                        </label>
                                                     </subviews>
                                                 </collectionViewCellContentView>
-                                                <size key="customSize" width="63" height="96"/>
+                                                <size key="customSize" width="93" height="93"/>
                                                 <connections>
-                                                    <outlet property="imageView" destination="6ZF-vf-Vmd" id="4gN-NK-cF6"/>
-                                                    <outlet property="prixLabel" destination="YHk-zU-YG5" id="L7K-fl-Ckr"/>
+                                                    <outlet property="imageView" destination="6Vh-uc-KUL" id="pJu-bE-0Bx"/>
                                                 </connections>
                                             </collectionViewCell>
                                         </cells>
                                     </collectionView>
                                 </subviews>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                                <constraints>
-                                    <constraint firstAttribute="bottom" secondItem="eYz-9F-iAP" secondAttribute="bottom" id="bX2-5a-Ymk"/>
-                                </constraints>
                             </view>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="m2P-aE-KZE">
-                                <rect key="frame" x="333" y="80" width="44" height="44"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <state key="normal" title="Button" image="scope" catalog="system"/>
-                                <buttonConfiguration key="configuration" style="filled" image="scope" title=""/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4Yz-zF-xN8" userLabel="CenterMapOnUserButton">
+                                <rect key="frame" x="338" y="102" width="45" height="45"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="45" id="dfU-kw-sYR"/>
+                                    <constraint firstAttribute="width" constant="45" id="uGA-nB-mu2"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" image="scope"/>
                                 <connections>
-                                    <action selector="searchButtonClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="V2u-NO-H5L"/>
+                                    <action selector="centerMapOnUserClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="uyk-5i-TnN"/>
                                 </connections>
                             </button>
                         </subviews>
-                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="4Yz-zF-xN8" secondAttribute="trailing" constant="10" id="Fj4-Md-ngF"/>
+                            <constraint firstItem="pWb-dm-uJK" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Oru-kX-05L"/>
+                            <constraint firstAttribute="trailing" secondItem="pWb-dm-uJK" secondAttribute="trailing" id="Qbd-gj-se6"/>
+                            <constraint firstItem="4Yz-zF-xN8" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" constant="102" id="lnp-Xy-De0"/>
+                            <constraint firstAttribute="bottom" secondItem="pWb-dm-uJK" secondAttribute="bottom" id="luC-us-EWd"/>
+                            <constraint firstItem="pWb-dm-uJK" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="vc9-NL-4T7"/>
+                        </constraints>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Map" id="0R4-mR-VVU"/>
+                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
-                        <outlet property="InfoView" destination="EvK-T3-FEJ" id="4lY-uW-Bkb"/>
-                        <outlet property="adresseLabel" destination="vRr-mf-Uyl" id="mDC-l3-SM1"/>
-                        <outlet property="automateIcon" destination="5jw-AS-gWk" id="lCT-fg-6iT"/>
-                        <outlet property="collectionView" destination="eYz-9F-iAP" id="dHy-VZ-7vg"/>
-                        <outlet property="distanceLabel" destination="ULv-Hf-ZEE" id="hVc-4I-X90"/>
-                        <outlet property="map" destination="Kvn-gd-GPO" id="iFJ-KY-RuG"/>
-                        <outlet property="searchButton" destination="m2P-aE-KZE" id="OwR-JG-5ta"/>
-                        <outlet property="servicesLabel" destination="Nh3-IE-8eS" id="R7e-U0-zgZ"/>
+                        <outlet property="addressLabel" destination="6J0-8E-vLe" id="yOO-Jm-a4Q"/>
+                        <outlet property="automateIcon" destination="363-4s-VR2" id="fNN-Q7-OUb"/>
+                        <outlet property="centerMapOnUserButton" destination="4Yz-zF-xN8" id="org-l5-Wv8"/>
+                        <outlet property="collectionView" destination="Y2i-H2-F6o" id="yqC-bP-pGv"/>
+                        <outlet property="distanceLabel" destination="NcF-5i-ton" id="pzT-ec-9yj"/>
+                        <outlet property="infosView" destination="zvv-eG-Kye" id="n4d-AY-aCi"/>
+                        <outlet property="map" destination="pWb-dm-uJK" id="SVn-id-0R7"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -127,7 +119,6 @@
     </scenes>
     <resources>
         <image name="24h" width="512" height="512"/>
-        <image name="scope" catalog="system" width="128" height="124"/>
         <image name="scope" width="16" height="16"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>

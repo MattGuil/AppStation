@@ -10,35 +10,44 @@ import UIKit
 import MapKit
 import CoreLocation
 
-struct Carburant {
-    let nom: String
-    let prix: String
+struct Fuel {
+    let name: String
+    let price: String
+}
+
+struct Infos {
+    var address: String
+    var distance: Int
+    var automate: Bool
+    var fuels: [Fuel]
 }
 
 
-class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate, UICollectionViewDelegateFlowLayout {
+class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate  {
     
     @IBOutlet weak var map: MKMapView!
     let locationManager = CLLocationManager()
-    @IBOutlet weak var searchButton: UIButton!
     
-    var stations : [[String: Any]]?
+    var stations: [[String: Any]]?
+    
+    @IBOutlet weak var centerMapOnUserButton: UIButton!
+    
+    var infos = Infos(address: "", distance: 0, automate: false, fuels: [])
+    
+    @IBOutlet weak var infosView: UIView!
+    @IBOutlet weak var automateIcon: UIImageView!
+    @IBOutlet weak var addressLabel: UILabel!
+    @IBOutlet weak var distanceLabel: UILabel!
     
     @IBOutlet weak var collectionView: UICollectionView!
-    var carburants: [Carburant] = []
     
-    @IBOutlet weak var InfoView: UIView!
-    @IBOutlet weak var adresseLabel: UILabel!
-    @IBOutlet weak var distanceLabel: UILabel!
+    /*
     @IBOutlet weak var servicesLabel: UILabel!
-    @IBOutlet weak var automateIcon: UIImageView!
+    */
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        collectionView.dataSource = self
-        
-        locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = kCLDistanceFilterNone
@@ -47,190 +56,48 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         map.showsUserLocation = true
         map.delegate = self
         
-        self.centerMapOnUserLocation()
+        self.launchAutomaticSearch()
         
-        InfoView.layer.cornerRadius = 10
-        
+        infosView.layer.cornerRadius = 10
+         
         // Ajoute un UITapGestureRecognizer à la vue principale
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         view.addGestureRecognizer(tapGesture)
         
         // Assure-toi que InfoView est détectable par les gestes
-        InfoView.isUserInteractionEnabled = true
+        infosView.isUserInteractionEnabled = true
+        
+        collectionView.dataSource = self
+        collectionView.delegate = self
         
     }
     
-    @objc func handleTap(_ sender: UITapGestureRecognizer) {
-        // Vérifie si le tap a eu lieu en dehors de InfoView
-        let location = sender.location(in: self.view)
-        if !InfoView.frame.contains(location) {
-            // Cacher InfoView
-            InfoView.isHidden = true
-            
-            // Désélectionner l'annotation actuellement sélectionnée sur la carte
-            if let selectedAnnotation = map.selectedAnnotations.first {
-                map.deselectAnnotation(selectedAnnotation, animated: true)
-            }
-            
-            // Effacer l'itinéraire affiché à l'écran
-            self.map.removeOverlays(self.map.overlays)
-        }
-    }
-    
-    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        guard let annotation = view.annotation as? MKPointAnnotation else {
-            return
-        }
-        
-        // Créer une requête d'itinéraire
-        var route : MKRoute?
-        let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: MKPlacemark(coordinate: self.locationManager.location!.coordinate))
-        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: annotation.coordinate))
-        request.transportType = .automobile
-        
-        // Créer un objet de direction pour obtenir les instructions de l'itinéraire
-        let directions = MKDirections(request: request)
-        
-        // Calculer l'itinéraire
-        directions.calculate { [self] (response, error) in
-            guard let response = response, error == nil else {
-                print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
-                return
-            }
-            
-            // Obtenir le premier itinéraire de la réponse
-            route = response.routes[0]
-            // Effacer l'itinéraire actuellement à l'écran (s'il existe)
-            self.map.removeOverlays(self.map.overlays)
-            // Ajouter l'itinéraire à la carte
-            self.map.addOverlay(route!.polyline, level: .aboveRoads)
-            
-            // Centrer la vue de la carte sur l'itinéraire le plus court
-            let insets = UIEdgeInsets(top: 75, left: 50, bottom: 275, right: 50) // Marge autour de l'itinéraire
-            self.map.setVisibleMapRect(route!.polyline.boundingMapRect, edgePadding: insets, animated: true)
-            
-            // Récupérer les informations sur la station depuis les données de la station
-            for station in self.stations! {
-                if let fields = station["fields"] as? [String: Any],
-                   let automate = fields["horaires_automate_24_24"] as? String,
-                   let adresse = fields["adresse"] as? String,
-                   let services = (fields["services_service"] as? String) ?? (fields["services"] as? String) ?? "Aucun service renseigné." as? String,
-                   let carburantsString = fields["prix"] as? String {
-                    
-                    if adresse.uppercased() == annotation.title {
-                        self.automateIcon.isHidden = (automate == "Non")
-                        self.adresseLabel.text = adresse.uppercased()
-                        self.distanceLabel.text = "à \(Int(round(route!.distance))) m"
-                        self.servicesLabel.text = services
-                        
-                        print(carburantsString)
-                        
-                        /*
-                        for carburantName in carburantsString.components(separatedBy: "/") {
-                            carburants.append(Carburant(nom: carburantName, prix: "0.0"))
-                        }
-                        */
-                        
-                        carburants.removeAll()
-                        
-                        if let data = carburantsString.data(using: .utf8) {
-                            do {
-                                let JSONObj = try JSONSerialization.jsonObject(with: data, options: [])
-                                if let array = JSONObj as? [[String: String]] {
-                                    for carburantData in array {
-                                        if let nom = carburantData["@nom"],
-                                           let prix = carburantData["@valeur"] {
-                                            
-                                            let carburant = Carburant(nom: nom, prix: prix)
-                                            carburants.append(carburant)
-                                        }
-                                    }
-                                    collectionView.reloadData()
-                                } else {
-                                    print("Invalid JSON format")
-                                }
-                            } catch {
-                                print("Erreur lors de la conversion de la chaîne en JSON : \(error)")
-                            }
-                        } else {
-                            print("Impossible de convertir la chaîne en données UTF-8")
-                        }
-                        
-                        let cellWidth = collectionView.bounds.size.width / CGFloat(carburants.count)
-                        let totalCellWidth = cellWidth * CGFloat(carburants.count)
-                        let padding = totalCellWidth / CGFloat(carburants.count)
-                        collectionView.contentInset = UIEdgeInsets(top: 0, left: padding, bottom: 0, right: padding)
-                        
-                        print("cellWidth: \(cellWidth)")
-                        print("totalCellWidth: \(totalCellWidth)")
-                        print("collectionView.bounds.size.width: \(collectionView.bounds.size.width)")
-                        print("padding: \(padding)")
-                        
-                    }
-                }
-            }
-            
-            self.InfoView.isHidden = false
-        }
-        
-        
-    }
-    
-    // Fonction pour dessiner les lignes de l'itinéraire sur la carte
-    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-        
-        guard let polyline = overlay as? MKPolyline else {
-            return MKOverlayRenderer()
-        }
-        
-        let renderer = MKPolylineRenderer(polyline: polyline)
-        renderer.strokeColor = .systemBlue
-        renderer.lineWidth = 5
-        return renderer
-    }
-    
-    // Cette méthode est appelée chaque fois que la position de l'utilisateur est mise à jour
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        
-        /*
-         // Récupérer la dernière position de l'utilisateur
-         guard let userLocation = locations.last else {
-         return
-         }
-         
-         // Mettre à jour la région de la carte pour inclure la nouvelle position de l'utilisateur
-         let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 2000, longitudinalMeters: 2000)
-         map.setRegion(region, animated: true)
-         */
-        
-    }
-    
-    // Gérer les erreurs de localisation
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Error requesting location: \(error.localizedDescription)")
-    }
-    
-    
-    
-    @IBAction func searchButtonClicked(_ sender: UIButton) {
+    func launchAutomaticSearch() {
         guard let userLocation = locationManager.location else {
             print("Impossible de récupérer la localisation de l'utilisateur.")
             return
         }
-        
-        getUserCityLoc(forLocation: userLocation) { cityName in
-            if let userCityLoc = cityName {
-                print("La ville de l'utilisateur est : \(userCityLoc)")
-                self.loadStationData(userCityLoc: userCityLoc)
+     
+        self.getUserCity(forLocation: userLocation) { city in
+            if let userCity = city {
+                print("L'utilisateur est localisé dans la ville de : \(userCity)")
+                self.loadDataFromAPI(userCity: userCity)
             } else {
                 print("Impossible de déterminer la ville de l'utilisateur.")
             }
         }
+        
+        self.centerMapOnUserLocation(userLocation: userLocation)
     }
     
+    func centerMapOnUserLocation(userLocation: CLLocation) {
+        
+        let regionRadius: CLLocationDistance = 3000
+        let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
+        map.setRegion(region, animated: true)
+    }
     
-    func getUserCityLoc(forLocation location: CLLocation, completion: @escaping (String?) -> Void) {
+    func getUserCity(forLocation location: CLLocation, completion: @escaping (String?) -> Void) {
         let geocoder = CLGeocoder()
         
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
@@ -257,13 +124,13 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
         }
     }
     
-    func loadStationData(userCityLoc: String) {
+    func loadDataFromAPI(userCity: String) {
         let urlString = "https://data.economie.gouv.fr/api/records/1.0/search/"
         var urlComponents = URLComponents(string: urlString)!
         
         urlComponents.queryItems = [
             URLQueryItem(name: "dataset", value: "prix-des-carburants-en-france-flux-instantane-v2"),
-            URLQueryItem(name: "q", value: "ville:\(userCityLoc)"),
+            URLQueryItem(name: "q", value: "ville:\(userCity)"),
             URLQueryItem(name: "rows", value: "100")
         ]
         
@@ -272,7 +139,7 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
             return
         }
         
-        loadDataFromAPI(apiUrl: url) { result in
+        sendRequest(apiUrl: url) { result in
             
             switch result {
             case .success(let data):
@@ -300,16 +167,13 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
                                 
                                 counterAnnotations += 1
                             }
-                            
                         }
                         counterRecords += 1
                     }
                     
-                    print("counterRecords = \(counterRecords)")
-                    print("counterAnnotations = \(counterAnnotations)")
+                    print("Nombre de stations correspondantes à la requête dans l'API : \(counterRecords)")
+                    print("Nombre de stations placées sur la map : \(counterAnnotations)")
                     
-                    // Centrer la vue sur la position de l'utilisateur
-                    self.centerMapOnUserLocation()
                 }
             case .failure(let error):
                 print("Erreur lors du chargement des données (loadStationData) : \(error)")
@@ -318,32 +182,33 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
     }
     
     
-    func loadDataFromAPI(apiUrl: URL, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // création de la session URLSession
+    func sendRequest(apiUrl: URL, completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        
+        // Création de la session URLSession
         let session = URLSession.shared
         
-        // création de la tâche de données
+        // Création de la tâche
         let task = session.dataTask(with: apiUrl) { data, response, error in
-            // vérification des erreurs
+            // Vérification des erreurs
             if let error = error {
                 completion(.failure(error))
                 return
             }
             
-            // vérification de la réponse
+            // Vérification de la réponse
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
                 completion(.failure(NSError(domain: "Response Error", code: 0, userInfo: nil)))
                 return
             }
             
-            // vérification des données
+            // Vérification des données
             guard let data = data else {
                 completion(.failure(NSError(domain: "Data Error", code: 0, userInfo: nil)))
                 return
             }
             
-            // récupération des données JSON
+            // Récupération des données JSON
             do {
                 let json = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
                 completion(.success(json))
@@ -352,53 +217,165 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, MKMapViewD
             }
         }
         
-        // lancement de la tâche
         task.resume()
     }
     
+    @IBAction func centerMapOnUserClicked(_ sender: UIButton) {
+        
+        guard let userLocation = locationManager.location else {
+            print("Impossible de récupérer la localisation de l'utilisateur.")
+            return
+        }
+        
+        self.centerMapOnUserLocation(userLocation: userLocation)
+    }
     
-    func centerMapOnUserLocation() {
-        if let userLocation = locationManager.location?.coordinate {
-            let regionRadius: CLLocationDistance = 1000 // Rayon de la région en mètres
-            let region = MKCoordinateRegion(center: userLocation, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
-            map.setRegion(region, animated: true)
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        
+        guard let annotation = view.annotation as? MKPointAnnotation else {
+            return
+        }
+        
+        var route : MKRoute?
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: self.locationManager.location!.coordinate))
+        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: annotation.coordinate))
+        request.transportType = .automobile
+        
+        let directions = MKDirections(request: request)
+        
+        directions.calculate { [self] (response, error) in
+            guard let response = response, error == nil else {
+                print("Erreur lors du calcul de l'itinéraire : \(error?.localizedDescription ?? "Erreur inconnue")")
+                return
+            }
+            
+            route = response.routes[0]
+            self.map.removeOverlays(self.map.overlays)
+            self.map.addOverlay(route!.polyline, level: .aboveRoads)
+            
+            let insets = UIEdgeInsets(top: 75, left: 50, bottom: 275, right: 50)
+            self.map.setVisibleMapRect(route!.polyline.boundingMapRect, edgePadding: insets, animated: true)
+            
+            if let stationAddress = annotation.title {
+                self.getInfosForStationAtAddress(requestedAddress: stationAddress, distanceFromUser: Int(round(route!.distance)))
+            }
+            
+            self.automateIcon.isHidden = !infos.automate
+            self.addressLabel.text = infos.address
+            self.distanceLabel.text = "à \(infos.distance) m"
+            
+            // Afficher la InfosView
+            self.infosView.isHidden = false
+        }
+        
+    }
+        
+    func getInfosForStationAtAddress(requestedAddress: String, distanceFromUser: Int) {
+        
+        for station in self.stations! {
+            if let fields = station["fields"] as? [String: Any],
+               let automate = fields["horaires_automate_24_24"] as? String,
+               let address = fields["adresse"] as? String,
+               let fuelsString = fields["prix"] as? String {
+                
+                if address.uppercased() == requestedAddress.uppercased() {
+                    
+                    /*
+                    print("#")
+                    print("Adresse : \(address)")
+                    print("Distance : \(distanceFromUser)")
+                    print("Automate 24/24 : \(automate == "Oui")")
+                    print("Carburants : \(fuelsString)")
+                    print("#")
+                    */
+                    
+                    self.infos.address = address.uppercased()
+                    self.infos.distance = distanceFromUser
+                    self.infos.automate = (automate == "Oui")
+                    self.infos.fuels = []
+                        
+                    if let data = fuelsString.data(using: .utf8) {
+                        do {
+                            let JSONObj = try JSONSerialization.jsonObject(with: data, options: [])
+                            if let array = JSONObj as? [[String: String]] {
+                                for fuelData in array {
+                                    if let name = fuelData["@nom"],
+                                       let price = fuelData["@valeur"] {
+                                        self.infos.fuels.append(Fuel(name: name, price: price))
+                                    }
+                                }
+                            } else {
+                                print("Format JSON invalide.")
+                            }
+                        } catch {
+                            print("Erreur lors de la conversion de la chaîne en JSON : \(error)")
+                        }
+                    } else {
+                        print("Impossible de convertir la chaîne en données UTF-8")
+                    }
+                }
+            }
         }
     }
     
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        
+        guard let polyline = overlay as? MKPolyline else {
+            return MKOverlayRenderer()
+        }
+        
+        let renderer = MKPolylineRenderer(polyline: polyline)
+        renderer.strokeColor = .systemBlue
+        renderer.lineWidth = 5
+        return renderer
+    }
+    
+    @objc func handleTap(_ sender: UITapGestureRecognizer) {
+        let location = sender.location(in: self.view)
+        if !self.infosView.frame.contains(location) {
+            
+            // Cacher InfosView
+            self.infosView.isHidden = true
+            
+            // Désélectionner l'annotation actuellement sélectionnée sur la carte
+            if let selectedAnnotation = map.selectedAnnotations.first {
+                self.map.deselectAnnotation(selectedAnnotation, animated: true)
+            }
+            
+            // Effacer l'itinéraire affiché à l'écran
+            self.map.removeOverlays(self.map.overlays)
+        }
+    }
+    
+    
 }
 
-extension MapViewController: UICollectionViewDataSource, UICollectionViewDelegate {
-    
+
+extension MapViewController {
+
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return carburants.count
+        return infos.fuels.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CarburantCell", for: indexPath) as! CarburantCell
-        let carburant = carburants[indexPath.item]
-        cell.configure(with: carburant)
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FuelCell", for: indexPath) as! FuelCell
+        let fuel = infos.fuels[indexPath.item]
+        print("infos.fuels : \(infos.fuels)")
+        cell.configure(with: fuel)
         return cell
     }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-            let cellWidth = collectionView.bounds.size.width / CGFloat(carburants.count)
-            let totalCellWidth = cellWidth * CGFloat(carburants.count)
-            let padding = (collectionView.bounds.size.width - totalCellWidth) / 2
-            return UIEdgeInsets(top: 0, left: padding, bottom: 0, right: padding)
-        }
-    
+
 }
+ 
+ 
+class FuelCell: UICollectionViewCell {
 
-
-class CarburantCell: UICollectionViewCell {
-    
     @IBOutlet weak var imageView: UIImageView!
-    @IBOutlet weak var prixLabel: UILabel!
-    
-    func configure(with carburant: Carburant) {
-        imageView.image = UIImage(named: carburant.nom)
-        prixLabel.text = carburant.prix
-        
-        print(carburant)
+    // @IBOutlet weak var priceLabel: UILabel!
+
+    func configure(with fuel: Fuel) {
+        imageView.image = UIImage(named: fuel.name)
+        // priceLabel.text = fuel.price
     }
 }
