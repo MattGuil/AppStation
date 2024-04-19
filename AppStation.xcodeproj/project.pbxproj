@@ -444,6 +444,7 @@
 				DEVELOPMENT_TEAM = HR9LYXBJ88;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AppStation/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Gaspotting;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to track you";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -474,6 +475,7 @@
 				DEVELOPMENT_TEAM = HR9LYXBJ88;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AppStation/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Gaspotting;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to track you";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
