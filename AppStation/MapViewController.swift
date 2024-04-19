@@ -20,6 +20,7 @@ struct Infos {
     var distance: Int
     var automate: Bool
     var fuels: [Fuel]
+    var services: [String]
 }
 
 
@@ -32,18 +33,14 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
     @IBOutlet weak var centerMapOnUserButton: UIButton!
     
-    var infos = Infos(address: "", distance: 0, automate: false, fuels: [])
+    var infos = Infos(address: "", distance: 0, automate: false, fuels: [], services: [])
     
     @IBOutlet weak var infosView: UIView!
     @IBOutlet weak var automateIcon: UIImageView!
     @IBOutlet weak var addressLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
-    
-    @IBOutlet weak var collectionView: UICollectionView!
-    
-    /*
-    @IBOutlet weak var servicesLabel: UILabel!
-    */
+    @IBOutlet weak var fuelsCollectionView: UICollectionView!
+    @IBOutlet weak var servicesCollectionView: UICollectionView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -67,8 +64,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         // S'assure que infosView est détectable par les gestes
         infosView.isUserInteractionEnabled = true
         
-        collectionView.dataSource = self
-        collectionView.delegate = self
+        fuelsCollectionView.dataSource = self
+        fuelsCollectionView.delegate = self
+        
+        servicesCollectionView.dataSource = self
+        servicesCollectionView.delegate = self
         
     }
     
@@ -264,8 +264,26 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             self.automateIcon.isHidden = !infos.automate
             self.addressLabel.text = infos.address
             self.distanceLabel.text = "à \(infos.distance) m"
+            self.fuelsCollectionView.reloadData()
             
-            self.collectionView.reloadData()
+            let fuelsCollectionViewWidth = fuelsCollectionView.frame.width
+            let cellWidth: CGFloat = 65 // Largeur de chaque cellule
+
+            // Nombre de cellules que vous avez
+            let totalNumberOfCells = fuelsCollectionView.numberOfItems(inSection: 0)
+
+            // Calcul de la largeur totale des cellules
+            let totalCellWidth = CGFloat(totalNumberOfCells) * cellWidth
+
+            // Calcul de l'espace vide à gauche et à droite pour centrer les cellules
+            let horizontalInset = max((fuelsCollectionViewWidth - totalCellWidth) / 2, 0)
+
+            if let flowLayout = fuelsCollectionView.collectionViewLayout as? UICollectionViewFlowLayout {
+                flowLayout.sectionInset = UIEdgeInsets(top: 0, left: horizontalInset, bottom: 0, right: horizontalInset)
+            }
+            
+            self.servicesCollectionView.reloadData()
+            print(servicesCollectionView.numberOfItems(inSection: 0))
             
             // Afficher la InfosView
             self.infosView.isHidden = false
@@ -279,7 +297,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             if let fields = station["fields"] as? [String: Any],
                let automate = fields["horaires_automate_24_24"] as? String,
                let address = fields["adresse"] as? String,
-               let fuelsString = fields["prix"] as? String {
+               let fuelsString = fields["prix"] as? String,
+               let servicesString = (fields["services_service"] as? String) ?? (fields["services"] as? String) ?? "Aucun service renseigné." as? String {
                 
                 if address.uppercased() == requestedAddress.uppercased() {
                     
@@ -296,6 +315,38 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                     self.infos.distance = distanceFromUser
                     self.infos.automate = (automate == "Oui")
                     self.infos.fuels = []
+                    self.infos.services = []
+                    
+                    // Traitement particulier des services
+                    if servicesString == "Aucun service renseigné." {
+                        self.infos.services = ["Aucun service renseigné."]
+                    } else if servicesString.contains("{") {
+                        
+                        // Traite services comme un objet JSON
+                        if let data = servicesString.data(using: .utf8) {
+                            do {
+                                if let jsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: [String]] {
+                                    if let servicesArray = jsonObject["service"] {
+                                        for service in servicesArray {
+                                            self.infos.services.append(service)
+                                        }
+                                    } else {
+                                        print("Clé 'service' manquante dans l'objet JSON.")
+                                    }
+                                } else {
+                                    print("Format JSON invalide.")
+                                }
+                            } catch {
+                                    print("Erreur lors de la conversion de la chaîne en JSON : \(error)")
+                            }
+                        } else {
+                            print("Impossible de convertir la chaîne en données UTF-8")
+                        }
+                    } else {
+                        
+                        // Traite services comme une chaine de caractères
+                        self.infos.services = servicesString.components(separatedBy: "//")
+                    }
                         
                     if let data = fuelsString.data(using: .utf8) {
                         do {
@@ -357,14 +408,27 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
 extension MapViewController {
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return infos.fuels.count
+        if collectionView.tag == 1 {
+            return infos.fuels.count
+        } else {
+            return infos.services.count
+        }
+        
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FuelCell", for: indexPath) as! FuelCell
-        let fuel = infos.fuels[indexPath.item]
-        cell.configure(with: fuel)
-        return cell
+        if collectionView.tag == 1 {
+            let fuelCell = collectionView.dequeueReusableCell(withReuseIdentifier: "FuelCell", for: indexPath) as! FuelCell
+            let fuel = infos.fuels[indexPath.item]
+            fuelCell.configure(with: fuel)
+            return fuelCell
+        } else {
+            let serviceCell = collectionView.dequeueReusableCell(withReuseIdentifier: "ServiceCell", for: indexPath) as! ServiceCell
+            let service = infos.services[indexPath.item]
+            serviceCell.configure(with: service)
+            return serviceCell
+        }
+        
     }
 
 }
@@ -378,5 +442,18 @@ class FuelCell: UICollectionViewCell {
     func configure(with fuel: Fuel) {
         imageView.image = UIImage(named: fuel.name)
         priceLabel.text = fuel.price
+    }
+}
+
+class ServiceCell: UICollectionViewCell {
+
+    @IBOutlet weak var label: UILabel!
+    
+    func configure(with service: String) {
+        label.text = service
+    }
+    
+    func display() {
+        print(label.text)
     }
 }
