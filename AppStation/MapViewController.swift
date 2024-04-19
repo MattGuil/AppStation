@@ -40,7 +40,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     @IBOutlet weak var addressLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
     @IBOutlet weak var fuelsCollectionView: UICollectionView!
-    @IBOutlet weak var servicesCollectionView: UICollectionView!
+    @IBOutlet weak var servicesList: UILabel!
+    // @IBOutlet weak var servicesCollectionView: UICollectionView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -67,8 +68,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         fuelsCollectionView.dataSource = self
         fuelsCollectionView.delegate = self
         
-        servicesCollectionView.dataSource = self
-        servicesCollectionView.delegate = self
+        // servicesCollectionView.dataSource = self
+        // servicesCollectionView.delegate = self
         
     }
     
@@ -282,8 +283,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 flowLayout.sectionInset = UIEdgeInsets(top: 0, left: horizontalInset, bottom: 0, right: horizontalInset)
             }
             
-            self.servicesCollectionView.reloadData()
-            print(servicesCollectionView.numberOfItems(inSection: 0))
+            self.servicesList.text = self.infos.services.joined(separator: ", ")
+            // self.servicesCollectionView.reloadData()
+            // print(servicesCollectionView.numberOfItems(inSection: 0))
             
             // Afficher la InfosView
             self.infosView.isHidden = false
@@ -408,27 +410,15 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
 extension MapViewController {
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if collectionView.tag == 1 {
-            return infos.fuels.count
-        } else {
-            return infos.services.count
-        }
+        return self.infos.fuels.count
         
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if collectionView.tag == 1 {
-            let fuelCell = collectionView.dequeueReusableCell(withReuseIdentifier: "FuelCell", for: indexPath) as! FuelCell
-            let fuel = infos.fuels[indexPath.item]
-            fuelCell.configure(with: fuel)
-            return fuelCell
-        } else {
-            let serviceCell = collectionView.dequeueReusableCell(withReuseIdentifier: "ServiceCell", for: indexPath) as! ServiceCell
-            let service = infos.services[indexPath.item]
-            serviceCell.configure(with: service)
-            return serviceCell
-        }
-        
+        let fuelCell = collectionView.dequeueReusableCell(withReuseIdentifier: "FuelCell", for: indexPath) as! FuelCell
+        let fuel = self.infos.fuels[indexPath.item]
+        fuelCell.configure(with: fuel)
+        return fuelCell
     }
 
 }
@@ -442,18 +432,5 @@ class FuelCell: UICollectionViewCell {
     func configure(with fuel: Fuel) {
         imageView.image = UIImage(named: fuel.name)
         priceLabel.text = fuel.price
-    }
-}
-
-class ServiceCell: UICollectionViewCell {
-
-    @IBOutlet weak var label: UILabel!
-    
-    func configure(with service: String) {
-        label.text = service
-    }
-    
-    func display() {
-        print(label.text)
     }
 }
